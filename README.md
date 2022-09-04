@@ -1,6 +1,6 @@
 # Bicycle
 
-[Drifblim](https://wiki.xxiivv.com/drifblim) is a [Uxntal](https://wiki.xxiivv.com/site/uxntal.html) REPL written in that same language.
+[Bicycle](https://wiki.xxiivv.com/drifblim) is a [Uxntal](https://wiki.xxiivv.com/site/uxntal.html) REPL written in that same language.
 
 ## Build
 
@@ -15,4 +15,8 @@ If do not wish to assemble it yourself, you can download [bicycle.rom](https://r
 
 ## Support
 
-- Linted with [uxnlin.rom](https://git.sr.ht/~rabbits/uxnlin)
+- [theme](https://wiki.xxiivv.com/site/theme.html)
+- [snarf](https://wiki.xxiivv.com/site/snarf.html)
+- Linted with [uxnlin](https://git.sr.ht/~rabbits/uxnlin)
+- Assembled with [drifblim](https://git.sr.ht/~rabbits/drifblim)
+

@@ -1,0 +1,8 @@
+.DS*
+*jpg
+*png
+*bmp
+/bin
+*snarf
+*theme
+*nametable
