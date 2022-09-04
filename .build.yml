@@ -1,0 +1,21 @@
+image: debian/stable
+oauth: pages.sr.ht/PAGES:RW
+environment:
+    SITE: rabbits.srht.site/bicycle
+sources:
+    - https://git.sr.ht/~rabbits/bicycle
+tasks:
+    - prepare: |
+        curl -fsS https://rabbits.srht.site/uxn/uxn-lin64.tar.gz | tar -zx
+    - build: |
+        cd bicycle
+        ../uxn/uxnasm src/bicycle.tal ../bicycle.rom
+    - upload: |
+        tar -czf out.tar.gz bicycle.rom
+        acurl() {
+            set +x
+            curl -H "Authorization: Bearer ${OAUTH2_TOKEN}" "${@}"
+            set -x
+        }
+        acurl -fsS "https://pages.sr.ht/publish/${SITE}" -Fcontent=@out.tar.gz
+        acurl -fsS "https://pages.sr.ht/publish/${SITE}" -Fcontent=@out.tar.gz -Fprotocol=GEMINI
