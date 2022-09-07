@@ -41,7 +41,7 @@ BRK
 BRK
 
 @on-complete ( -> )
-	
+
 	;&wst-txt ;print-str JSR2
 	#ffff LDA #00
 	&loop
@@ -55,7 +55,7 @@ BRK
 	&wst-txt "WST: 20 $1
 
 @on-error ( -> )
-	
+
 	;err ;print-str JSR2
 	;err/eval ;print-str JSR2
 	#2818 DEO 
@@ -82,7 +82,8 @@ BRK
 JMP2r
 	&asm-txt "ASM: 20 $1
 
-( assembler ----------------------------------------------------------------- )
+(
+@|assembler )
 
 @walk ( char -- )
 
@@ -137,10 +138,10 @@ JMP2r
 	INC2 INC2 INC2k ,find-label JSR DUP2 #ffff EQU2 ,&no-found JCN
 	LDA2 STH2
 	( rune )
-	LDAk LIT '. EQU ,&on-litzer JCN
-	LDAk LIT ', EQU ,&on-litrel JCN
-	LDAk LIT '; EQU ,&on-litabs JCN
-	LDAk LIT ': EQU ,&on-rawabs JCN
+	LDAk LIT ". EQU ,&on-litzer JCN
+	LDAk LIT ", EQU ,&on-litrel JCN
+	LDAk LIT "; EQU ,&on-litabs JCN
+	LDAk LIT ": EQU ,&on-rawabs JCN
 	&no-found
 	POP2 STH2r INC2 INC2 POP2r
 
@@ -204,6 +205,9 @@ JMP2r
 
 ;scpy JMP2
 
+(
+@|actions )
+
 @do-padabs ( t* -- ) ;shex JSR2 .p/ptr STZ2 JMP2r
 @do-padrel ( t* -- ) ;shex JSR2 .p/ptr LDZ2 ADD2 .p/ptr STZ2 JMP2r
 @do-plabel ( t* -- ) ,set-scope JSR ,create-label JMP
@@ -219,7 +223,7 @@ JMP2r
 
 	;buf STH2k #0030 ;mclr JSR2
 	;scope STH2kr ;scpy JSR2
-	LIT '/ STH2kr ;sput JSR2
+	LIT "/ STH2kr ;sput JSR2
 	STH2kr ;scat JSR2 STH2r
 
 JMP2r
@@ -228,7 +232,7 @@ JMP2r
 
 	( addr ) ;refs .ref/ptr LDZ2 ADD2 STH2k STA2 INC2r INC2r
 	( rune ) DUP2 #0001 SUB2 LDA STH2kr STA INC2r
-	( child ) LDAk LIT '& NEQ ,&parent JCN INC2 ,make-sublabel JSR &parent
+	( child ) LDAk LIT "& NEQ ,&parent JCN INC2 ,make-sublabel JSR &parent
 	( name ) DUP2 STH2kr ;scpy JSR2
 	( move ) ;slen JSR2 STH2r ADD2 ;refs SUB2 INC2 .ref/ptr STZ2
 
@@ -277,9 +281,9 @@ JMP2r
 
 	LITr 00
 	&while
-		LDAk LIT '2 EQU #50 SFT STH ADDr
-		LDAk LIT 'r EQU #60 SFT STH ADDr
-		LDAk LIT 'k EQU #70 SFT STH ADDr
+		LDAk LIT "2 EQU #50 SFT STH ADDr
+		LDAk LIT "r EQU #60 SFT STH ADDr
+		LDAk LIT "k EQU #70 SFT STH ADDr
 		INC2 LDAk ,&while JCN
 	POP2 STHr
 
@@ -294,6 +298,8 @@ JMP2r
 
 JMP2r
 
+(
+@|stdlib )
 @shex ( str* -- short* )
 
 	DUP2 ,sihx JSR ,&valid JCN
@@ -439,10 +445,10 @@ JMP2r
 	&zero "Zero-Division $1
 
 @runes
-	'| :do-padabs	'$ :do-padrel	'@ :do-plabel	'& :do-slabel
-	'. :do-litbyt	', :do-litbyt	'; :do-litabs	': :do-rawabs
-	'' :do-rawchr	'" :do-rawstr	'[ :do-ignore	'] :do-ignore
-	'# :do-lithex 	&end
+	"| :do-padabs	"$ :do-padrel	"@ :do-plabel	"& :do-slabel
+	". :do-litbyt	", :do-litbyt	"; :do-litabs	": :do-rawabs
+	"' :do-rawchr	"" :do-rawstr	"[ :do-ignore	"] :do-ignore
+	"# :do-lithex 	&end
 
 ( buffers )
 
