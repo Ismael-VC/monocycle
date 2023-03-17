@@ -35,19 +35,42 @@ BRK
 
 &append ( c -- )
 
-	[ LIT2 &ptr =input ] STH2k STA
+	[ LIT2 &ptr =source ] STH2k STA
 	INC2r STH2r ,&ptr STR2 BRK
 
 &eval ( char -> )
 
 	POP
+	;source pstr #0a18 DEO
+
+	( pre cleanup )
+	;rom .emu/length LDZ2 mclr
+	( parse )
+	assemble
+	;write/head LDA2 .emu/length STZ2
 	( cleanup )
-	;input
+	;source
 		DUP2 draw-text
 		DUP2 ;&ptr STA2
 		sclr
+	run
+	draw-stacks
 
 BRK
+
+@run ( -- )
+
+	reset
+	#00 .emu/sleep STZ
+	#f000
+	&w
+		step
+		.emu/sleep LDZ ?&end
+		INC2 ORAk ?&w
+	&end
+	POP2
+
+JMP2r
 
 @send ( v* p* -- )
 
@@ -74,6 +97,63 @@ JMP2r
 (
 @|drawing )
 
+@draw-stacks ( -- )
+
+	#0098 .Screen/x DEO2
+	#0028 .Screen/y DEO2
+	;wst draw-stack
+
+	#00b0 .Screen/x DEO2
+	#0028 .Screen/y DEO2
+	;rst
+
+JMP2r
+
+@draw-stack ( stack* -- )
+
+	DUP2 #00fe ADD2 LDA ,&sp STR
+	STH2
+	#2000
+	&loop
+		( highlight )
+		INCk [ LIT &sp $1 ] EQU STH
+			#0901 STHr [ JMP SWP POP ] ;draw-char/color STA
+		DUP ,&sp LDR LTH ?&no-empty
+			LIT ". draw-char
+			!&continue
+			&no-empty
+		#00 OVR STH2kr ADD2 LDA draw-byte
+		&continue
+		.Screen/x DEI2k #0010 SUB2 ROT DEO2
+		.Screen/y DEI2k #0008 ADD2 ROT DEO2
+		INC GTHk ?&loop
+	POP2
+	POP2r
+
+JMP2r
+
+@draw-short ( short* -- )
+
+	SWP draw-byte
+
+@draw-byte ( byte -- )
+
+	DUP #04 SFT draw-hex
+
+@draw-hex ( char -- )
+
+	#0f AND DUP #09 GTH #27 MUL ADD #30 ADD
+
+@draw-char ( char -- )
+
+	#20 SUB #00 SWP
+		DUP2 #50 SFT2 ;font/glyphs ADD2 .Screen/addr DEO2
+		;font ADD2 LDA #00 SWP .Screen/x DEI2 ADD2
+	[ LIT &color 01 ] .Screen/sprite DEOk DEO
+	.Screen/x DEO2
+
+JMP2r
+
 @draw-event ( str* -- )
 
 	pstr
@@ -99,16 +179,6 @@ JMP2r
 		LDAk draw-char
 		INC2 LDAk ?&while
 	POP2
-
-JMP2r
-
-@draw-char ( char -- )
-
-	#20 SUB #00 SWP
-		DUP2 #50 SFT2 ;font/glyphs ADD2 .Screen/addr DEO2
-		;font ADD2 LDA #00 SWP .Screen/x DEI2 ADD2
-	[ LIT &color 01 ] .Screen/sprite DEOk DEO
-	.Screen/x DEO2
 
 JMP2r
 
