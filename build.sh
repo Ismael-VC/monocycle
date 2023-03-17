@@ -9,7 +9,7 @@ DST="bin/bicycle.rom"
 
 CPY="$HOME/roms"
 ETC=""
-ARG="hello world\0"
+ARG=""
 
 echo ">> Cleaning"
 rm -rf bin
@@ -32,5 +32,5 @@ fi
 
 echo ">> Running $DST"
 # $EMU $DST $ARG
-uxnemu ~/roms/left.rom etc/example.txt | uxnemu $DST
+uxnemu ~/roms/left.rom etc/example.tal | uxnemu $DST
 

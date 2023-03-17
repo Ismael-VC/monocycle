@@ -1,0 +1,15 @@
+#12 #34 ADDk SUB INCk MULk 
+
+;hello-word 
+
+@print-text ( str* -- )
+
+	&while
+		( send ) LDAk #18 DEO
+		( loop ) INC2 LDAk ,&while JCN
+	POP2
+
+JMP2r
+
+@hello-word "Hello 20 "World! 00
+

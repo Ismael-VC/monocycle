@@ -20,10 +20,10 @@
 	#f0aa .System/b DEO2
 	( size )
 	#01c0 .Screen/width DEO2
-	#00a0 .Screen/height DEO2
+	#0080 .Screen/height DEO2
 	( mode )
 	#15 .Screen/auto DEO
-	draw-spacer
+	redraw
 
 	( unlock )
 	;on-console .Console/vector DEO2
@@ -67,17 +67,12 @@ BRK
 	( parse )
 	assemble
 	;write/head LDA2 .emu/length STZ2
+	( let's go! )
+	run redraw
 	( cleanup )
-	#0010
-		DUP2 .Screen/x DEO2
-		.Screen/y DEO2
-
 	;source
-		DUP2 draw-str
 		DUP2 ;&ptr STA2
 		sclr
-	run
-	draw-stacks
 
 BRK
 
@@ -119,6 +114,37 @@ JMP2r
 
 (
 @|drawing )
+
+@redraw ( -- )
+
+	draw-clear
+	
+	#0010
+		DUP2 .Screen/x DEO2
+		.Screen/y DEO2
+	
+	;source
+		DUP2 draw-str
+	 
+	draw-stacks
+	draw-spacer
+
+JMP2r
+
+@draw-clear ( -- )
+
+	#0000
+		DUP2 .Screen/x DEO2
+		.Screen/y DEO2
+	#f1 .Screen/auto DEO
+	#00 .Screen/width DEI2 #03 SFT2 NIP SUB
+	&l
+		#00 .Screen/sprite DEO
+		INC DUP ?&l
+	POP
+	#15 .Screen/auto DEO
+
+JMP2r
 
 @draw-stacks ( -- )
 
