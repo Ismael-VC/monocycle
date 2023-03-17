@@ -7,7 +7,6 @@
 
 |0000
 
-	@pointer &x $2 &y $2
 	( system )
 	@emu &sleep $1 &rate $1 &time $2 &length $2
 	@uxn &pc $2 &src $2 &dst $2 &err $1 &2 $1
@@ -33,10 +32,7 @@ BRK
 
 @on-mouse ( -> )
 
-	#40 draw-pointer
-	.Mouse/x DEI2 .pointer/x STZ2
-	.Mouse/y DEI2 .pointer/y STZ2
-	.Mouse/state DEI #00 NEQ #41 ADD draw-pointer
+	[ LIT2 00 -Mouse/state ] DEI NEQ #41 ADD ;cursor-icn update-cursor
 
 	.Mouse/state DEI ?&on-mouse-down
 
@@ -174,7 +170,6 @@ JMP2r
 			&no-empty
 		( byte )
 		#00 OVR STH2kr ADD2 LDA draw-byte #20 draw-char
-		&continue
 		INC GTHk ?&loop
 	POP2
 	POP2r
@@ -222,12 +217,19 @@ JMP2r
 
 JMP2r
 
-@draw-pointer ( color -- )
+@update-cursor ( color addr* -- )
 
-	.pointer/x LDZ2 .Screen/x DEO2
-	.pointer/y LDZ2 .Screen/y DEO2
-	;pointer-icn .Screen/addr DEO2
-	.Screen/sprite DEOk DEO
+	[ LIT2 00 -Screen/auto ] DEO
+	#40 draw-cursor
+	.Mouse/x DEI2 ,draw-cursor/x STR2
+	.Mouse/y DEI2 ,draw-cursor/y STR2
+	.Screen/addr DEO2
+
+@draw-cursor ( color -- )
+
+	[ LIT2 &x $2 ] .Screen/x DEO2
+	[ LIT2 &y $2 ] .Screen/y DEO2
+	.Screen/sprite DEO
 
 JMP2r
 
@@ -253,7 +255,6 @@ JMP2r
 	@mclr ( src* len* -- ) OVR2 ADD2 SWP2 &l STH2k #00 STH2r STA INC2 GTH2k ,&l JCN POP2 POP2 JMP2r
 	@scap ( str* -- end* ) LDAk ?&w JMP2r &w INC2 LDAk ?&w JMP2r
 	@sput ( chr str* -- ) scap INC2k #00 ROT ROT STA STA JMP2r
-	@spop ( str* -- ) LDAk #00 EQU ?&skip #0000 SWP2 scap #0001 SUB2 STA2 &skip JMP2r
 	@slen ( str* -- len* ) DUP2 scap SWP2 SUB2 JMP2r
 	@scat ( src* dst* -- ) scap
 	@scpy ( src* dst* -- ) OVR2 LDA ?&e POP2 POP2 JMP2r &e STH2 &w LDAk STH2kr STA INC2r INC2 LDAk ?&w POP2 #00 STH2r STA JMP2r
@@ -262,7 +263,6 @@ JMP2r
 	@scmp3 ( a* b* -- f ) LDA2k ROT2 LDA2k ROT2 EQU2 STH INC2 LDA2 SWP2 INC2 LDA2 EQU2 STHr AND JMP2r
 	@chex ( c -- val|ff ) LIT "0 SUB DUP #09 GTH [ JMP JMP2r ] #27 SUB DUP #0f GTH [ JMP JMP2r ] POP #ff JMP2r
 	@shex ( str* -- val* ) LIT2r 0000 &w LITr 40 SFT2r LITr 00 LDAk chex STH ADD2r INC2 LDAk ?&w POP2 STH2r JMP2r
-	@skey ( key buf -- proc ) OVR #21 LTH ?&eval #00 SWP sput #00 JMP2r &eval POP2 #01 JMP2r
 	@pstr ( str* -- ) LDAk ?&w POP2 JMP2r &w LDAk #19 DEO INC2 LDAk ?&w POP2 JMP2r
 	@phex ( short* -- ) SWP ,&b JSR &b ( byte -- ) DUP #04 SFT ,&c JSR &c ( char -- ) #0f AND DUP #09 GTH #27 MUL ADD #30 ADD #18 DEO JMP2r
 
