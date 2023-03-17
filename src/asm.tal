@@ -1,0 +1,325 @@
+@on-error ( id* name* -> )
+
+	;err pstr pstr #2019 DEO pstr ;dict/in pstr ;scope pstr ;dict/dot pstr
+	( halt ) #010f DEO
+
+BRK
+
+(
+@|generics )
+
+@assemble ( -- )
+
+	( prepare )
+	;sym
+		DUP2 #2000 mclr
+		;create-label/ptr STA2
+	#0000 ;write/length STA2
+	( let's go! )
+	#01 handle-all
+	#00
+
+@handle-all ( skip -- )
+
+	;write/skip STA
+	#0100 set-head
+	;dict/reset ;scope scpy
+
+	;source
+	&w
+		LDAk handle-char
+		INC2 LDAk ?&w
+	POP2
+
+JMP2r
+
+@handle-char ( c -- )
+
+	#20 GTHk NIP ?&append POP
+	;token LDAk ?&run POP2
+
+JMP2r
+	&append ( c -- ) ;token DUP2 slen #001f LTH2 ?sput POP JMP2r
+	&run ( t* -- ) DUP2 handle-token !sclr
+
+@handle-token ( t* -- )
+
+	LDAk LIT "( EQU ?&on-parens
+	LDAk LIT ") EQU ?&on-parens
+	[ LIT &sleep $1 ] ?&on-sleep
+
+!parse
+	&on-parens ( t* -- ) LDA LIT "( EQU ,&sleep STR JMP2r
+	&on-sleep ( t* -- ) POP2 JMP2r
+
+(
+@|core )
+
+@parse ( t* -- )
+
+	LDAk ,&rune STR
+	( runes )
+	;runes/err ;runes
+	&l
+		LDAk [ LIT &rune $1 ] NEQ ?&no-runic
+			NIP2 INC2 LDA2 JMP2
+			&no-runic
+		#0003 ADD2 GTH2k ?&l
+	POP2 POP2
+	( non-runic )
+	DUP2 is-hex ?lib/rawhex
+	DUP2 is-opcode ?lib/opcode
+
+!lib/litjsi
+
+@lib
+	&padabs INC2 get-hex write-pad !set-head
+	&padrel INC2 get-hex !write-fill
+	&toplab INC2 ;scope OVR2 SWP2 scpy !create-label
+	&sublab INC2 make-sublabel !create-label
+	&litrel #80 write
+	&rawrel INC2 get-ref get-rel INC !write
+	&litzep #80 write
+	&rawzep INC2 get-ref LDA2 NIP !write
+	&litabs #a0 write
+	&rawabs INC2 get-ref LDA2 !write-short
+	&litjci #20 write INC2 !write-call
+	&litjmi #40 write INC2 !write-call
+	&litjsi #60 write !write-call
+	&lithex INC2 DUP2 slen NIP #02 SFT #a080 ROT [ JMP SWP POP ] write
+	&rawhex !write-hex
+	&rawstr INC2 !write-str
+	&opcode find-opcode !write
+	&ignore POP2 JMP2r
+
+(
+@|primitives )
+
+@write-pad ( addr* -- dest* )
+
+	;write/head LDA2
+	LTH2k ?&no-pad
+		SUB2k write-fill POP2 JMP2r
+		&no-pad
+	OVR2 #0100 LTH2 ?&no-err
+		;token ;err/rewind !on-error
+		&no-err
+	POP2
+
+JMP2r
+
+@write-fill ( len* -- )
+
+	#0000 EQU2k ?&skip
+	&l
+		#00 write
+		INC2 GTH2k ?&l
+	&skip
+	POP2 POP2
+
+JMP2r
+
+@write-str ( str* -- )
+
+	&w
+		LDAk write
+		INC2 LDAk ?&w
+	POP2
+
+JMP2r
+
+@write-call ( str* -- )
+
+	get-ref LDA2 ;write/head LDA2 INC2 INC2 SUB2
+
+!write-short
+
+@write-hex ( str* -- )
+
+	DUP2 slen OVR2 get-hex SWP2 NIP
+	DUP #02 EQU ?&byte
+	DUP #04 EQU ?&short
+	POP POP2
+	;err/number !on-error
+	&byte POP NIP2 NIP !write
+	&short POP NIP2 ( fall through )
+
+@write-short ( short* -- )
+
+	SWP write
+
+@write ( byte -- )
+
+	,&b STR
+	[ LIT2 &head 0100 ] #0100 LTH2 ?&ignore
+	[ LIT &skip 01 ] ?&pass1
+	[ LIT2 &length $2 ] ,&head LDR2 LTH2 ?&ignore
+	( pass2 ) ,&b LDR ;rom ,&head LDR2 ADD2 STA
+	&ignore
+
+!move-head
+
+&pass1 ( -- )
+
+	[ LIT &b $1 ] #00 EQU ?&no-record
+		,&head LDR2 ;write/length STA2
+		&no-record
+
+@move-head ( -- )
+
+	;write/head LDA2 INC2
+
+@set-head ( v* -- )
+
+	;write/head STA2
+
+JMP2r
+
+(
+@|labels )
+
+@create-label ( name* -- )
+
+	;write/skip LDA #00 EQU ?&skip
+	( not hex ) DUP2 is-hex ?&invalid
+	( not opc ) DUP2 is-opcode ?&invalid
+	( not dup ) DUP2 find-label INC2 ORA ?&not-unique
+	( save addr ) ;write/head LDA2 [ LIT2 &ptr =sym ] STH2k STA2
+	( move ) INC2r INC2r
+	( save name ) DUP2 STH2kr scpy
+	( move ) slen STH2r ADD2 INC2 ,&ptr STR2
+
+JMP2r
+	&invalid ;err/invalid !on-error
+	&not-unique ;err/duplicate !on-error
+	&skip POP2 JMP2r
+
+@make-sublabel ( name* -- sublabel* )
+
+	;scope ;sublabel STH2k scpy
+	LIT "/ STH2kr sput
+	STH2kr scat
+	STH2r
+
+JMP2r
+
+@find-label ( name* -- <addr*> )
+
+	STH2
+	;sym
+	&w
+		INC2 INC2 DUP2 STH2kr scmp ?&found
+		scap INC2 INC2k INC2 LDA ?&w
+	POP2
+	POP2r
+	#ffff
+
+JMP2r
+	&found #0002 SUB2 POP2r JMP2r
+
+(
+@|helpers )
+
+@get-hex ( str* -- value* )
+
+	DUP2 is-hex ?&valid
+		;err/number !on-error
+		&valid
+
+!shex
+
+@get-rel ( label* -- distance )
+
+	;write/skip LDA ?&fill
+	LDA2k ;write/head LDA2 SUB2 #0003 SUB2
+	DUP2 #0080 ADD2 POP ?&fail
+	NIP2 NIP
+
+JMP2r
+	&fail POP2 #0003 ADD2 ;err/distance !on-error
+	&fill POP2 #ff JMP2r
+
+@get-ref ( token* -- <label*> )
+
+	;write/skip LDA #00 EQU ?&no-write
+		POP2 ;&fill JMP2r
+		&no-write
+	LDAk LIT "& NEQ ?&no-sub
+		INC2 make-sublabel
+		&no-sub
+	find-label
+		INC2k ORA ?&found
+			POP2 ;err/reference !on-error
+			&found
+
+JMP2r
+	&fill ffff "[empty] $1
+
+@is-hex ( str* -- f )
+
+	&w
+		LDAk chex INC ?&valid
+			POP2 #00 JMP2r &valid
+		INC2 LDAk ?&w
+	POP2
+	#01
+
+JMP2r
+
+@is-opcode ( string* -- f )
+
+	DUP2 ;opcodes2/brk scmp3 ?find-opcode/on-brk
+
+@find-opcode ( name* -- byte )
+
+	STH2
+	#2000
+	&l
+		#00 OVR #03 MUL ;opcodes2 ADD2 STH2kr scmp3 ?&on-found
+		INC GTHk ?&l
+	POP2 POP2r #00
+
+JMP2r
+	&on-found
+		NIP ( LITk ) DUP #00 EQU #70 SFT ADD
+		STH2r #0003 ADD2 find-modes ADD JMP2r
+	&on-brk POP2 #01 JMP2r
+
+@find-modes ( mode* -- byte )
+
+	LITr 00
+	&w
+		LDAk #20
+		OVR LIT "2 EQU ?&end DUP ADD
+		OVR LIT "r EQU ?&end DUP ADD
+		OVR LIT "k EQU ?&end DUP ADD
+		OVR #21 LTH ?&end
+			;token ;err/mode !on-error
+		&end NIP STH ORAr
+		INC2 LDAk ?&w
+	POP2 STHr
+
+JMP2r
+
+(
+@|assets )
+
+@opcodes2 [
+	"LIT "INC "POP "NIP "SWP "ROT "DUP "OVR
+	"EQU "NEQ "GTH "LTH "JMP "JCN "JSR "STH
+	"LDZ "STZ "LDR "STR "LDA "STA "DEI "DEO
+	"ADD "SUB "MUL "DIV "AND "ORA "EOR "SFT
+	&brk "BRK ]
+
+@runes [
+	"| =lib/padabs "$ =lib/padrel
+	"@ =lib/toplab "& =lib/sublab
+	", =lib/litrel "_ =lib/rawrel
+	". =lib/litzep "- =lib/rawzep
+	"; =lib/litabs "= =lib/rawabs
+	"? =lib/litjci "! =lib/litjmi
+	5b =lib/ignore 5d =lib/ignore
+	"# =lib/lithex "" =lib/rawstr ]
+	&err
+
+~src/uxn.tal

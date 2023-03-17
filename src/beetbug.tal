@@ -1,0 +1,874 @@
+( Beetbug )
+
+|00 @System &vector $2 &wst $1 &rst $1 &pad $4 &r $2 &g $2 &b $2 &debug $1 &halt $1
+|10 @Console &vector $2 &read $1 &pad $5 &write $1
+|20 @Screen &vector $2 &width $2 &height $2 &auto $1 &pad $1 &x $2 &y $2 &addr $2 &pixel $1 &sprite $1
+|80 @Controller &vector $2 &button $1 &key $1
+|90 @Mouse &vector $2 &x $2 &y $2 &state $1 &pad $3 &scrollx $2 &scrolly $2
+|a0 @File &vector $2 &success $2 &stat $2 &delete $1 &append $1 &name $2 &length $2 &read $2 &write $2
+
+|0000
+
+	@scroll $2
+	( system )
+	@emu &sleep $1 &rate $1 &time $2 &length $2
+	@uxn &pc $2 &src $2 &dst $2 &err $1 &2 $1
+
+|0100 ( -> )
+
+	( meta )
+	;meta #06 DEO2
+
+	( theme )
+	#0f8d .System/r DEO2
+	#0f8a .System/g DEO2
+	#0fff .System/b DEO2
+	load-theme
+
+	( size )
+	#0190 .Screen/width DEO2
+	#0158 .Screen/height DEO2
+
+	( param )
+	;on-repl .Console/vector DEO2
+	;on-button .Controller/vector DEO2
+	;on-mouse .Mouse/vector DEO2
+	;on-frame .Screen/vector DEO2
+
+	#01 .emu/sleep STZ
+	#02 .emu/rate STZ
+
+	press-back
+	( unlock )
+	#0a18 DEO
+	LIT "> #18 DEO #2018 DEO
+
+BRK
+
+@meta
+	( version ) 00
+	( name ) "Beetbug 0a
+	( details ) "A 20 "Step 20 "Debugger 0a
+	( author ) "By 20 "Devine 20 "Lu 20 "Linvega 0a
+	( date ) "Jan 20 "8, 20 "2023 00
+	01
+		( icon ) 83 =appicon
+
+(
+@|vectors )
+
+@on-button ( -> )
+
+	.Controller/key DEI DUP ?on-key POP
+
+	.Controller/button DEI
+	DUP #40 NEQ ?&no-back press-back &no-back
+	DUP #01 NEQ ?&no-play press-play &no-play
+	DUP #80 NEQ ?&no-step press-step &no-step
+	DUP #02 NEQ ?&no-rate press-rate &no-rate
+	POP
+
+BRK
+
+@on-key ( key -> )
+
+	DUP #0d EQU ?&eval
+	DUP #08 EQU ?&erase
+	;source sput
+	draw-source
+
+BRK
+	&erase
+		clear-source
+		;source spop
+		draw-source
+	BRK
+	&eval
+		press-back
+		;source sput eval
+	BRK
+
+@on-mouse ( -> )
+
+	.Mouse/state DEI #00 NEQ #41 ADD ;cursor-icn update-cursor
+
+	( route )
+	.Mouse/scrolly DEI2 ORAk ?&on-mouse-scroll POP2
+	.Mouse/state DEI ?&on-mouse-touch
+
+BRK
+
+&on-mouse-scroll ( y* -> )
+
+	scroll-by
+
+BRK
+
+&on-mouse-touch ( -> )
+
+	.Mouse/y DEI2 #0020 LTH2 ?&on-mouse-menu
+
+BRK
+
+&on-mouse-menu ( -> )
+
+	#00 .Mouse/state DEO
+	.Mouse/x DEI2 #00c8 SUB2 #0018 DIV2 NIP
+	DUP ?&no-back press-back &no-back
+	DUP #01 NEQ ?&no-play press-play &no-play
+	DUP #02 NEQ ?&no-step press-step &no-step
+	DUP #07 NEQ ?&no-rate press-rate &no-rate
+	POP
+
+BRK
+
+@on-frame ( -> )
+
+	.emu/sleep LDZ ?&ignore
+	[ LIT &f $1 ] .emu/rate LDZ INC NEQ ?&skip
+		;dict/step draw-event
+		step
+		draw-state
+		#00 ,&f STR
+	&skip
+	,&f LDR INC ,&f STR
+	&ignore
+
+BRK
+
+@on-repl ( -> )
+
+	.Console/read DEI
+	[ LIT2 &buf =source ] STAk INC2 ,&buf STR2
+	#0a EQU [ JMP BRK ]
+
+	;source DUP2 scap #0005 SUB2
+		DUP2 ;&rom-ext scmp ?on-rom
+		DUP2 ;&tal-ext scmp ?on-tal
+		POP2
+	POP2
+
+	eval
+	run
+	print-state
+	( cleanup )
+	;source ,&buf STR2
+
+BRK
+	&rom-ext ".rom 0a $1
+	&tal-ext ".tal 0a $1
+
+@on-rom ( name* ext* -> )
+
+	POP2 DUP2 spop
+	load
+	redraw-all
+	;source
+		DUP2 sclr
+		;on-repl/buf STA2
+
+BRK
+
+@on-tal ( name* ext* -> )
+
+	POP2 DUP2 spop
+	.File/name DEO2
+	#2000 .File/length DEO2
+	;source .File/read DEO2
+	eval
+	redraw-all
+	;source
+		DUP2 sclr
+		;on-repl/buf
+
+BRK
+
+(
+@|I/O )
+
+@load ( name* -- )
+
+	( rom data )
+	DUP2 .File/name DEO2
+	#8000 .File/length DEO2
+	;rom/reset .File/read DEO2
+	.File/success DEI2 #0100 ADD2 .emu/length STZ2
+	( sym data )
+	DUP2 scap STH2k ;&ext SWP2 scpy
+	.File/name DEO2
+	#4000 .File/length DEO2
+	;sym .File/read DEO2
+	#00 STH2r STA
+	( ready )
+
+!reset
+	&ext ".sym $1
+
+@send ( v* p* -- )
+
+	NIP
+	DUP #0e NEQ ?&no-debug
+		press-pause
+		;dict/breakpoint draw-event
+		&no-debug
+	DUP #0f NEQ ?&no-halt
+		press-pause
+		;dict/halt draw-event
+		&no-halt
+	DUP #18 NEQ ?&no-console
+		OVR append-char
+		&no-console
+	POP POP2
+
+JMP2r
+
+@receive ( p* -- )
+
+	phex #0a18 DEO
+
+JMP2r
+
+(
+@|controls )
+
+@press-back ( -- )
+
+	#01 .emu/sleep STZ
+	#0000 scroll-to
+	reset
+	;dict/ready draw-event
+
+!redraw-all
+
+@press-play ( -- )
+
+	.emu/sleep LDZk #00 EQU SWP STZ
+	#0000 scroll-to
+
+!redraw-all
+
+@press-step ( -- )
+
+	#01 .emu/sleep STZ
+	#0000 scroll-to
+	;dict/step draw-event
+	step
+
+!draw-state
+
+@press-rate ( -- )
+
+	#00 ;on-frame/f STA
+	.emu/rate LDZk INC #0f AND SWP STZ
+
+!redraw-all
+
+@press-pause ( -- )
+
+	#01 .emu/sleep STZ
+
+!redraw-all
+
+@scroll-by ( mod* -- )
+
+	.scroll LDZ2 ADD2
+
+@scroll-to ( y* -- )
+
+	.scroll STZ2
+	draw-instructions
+
+!draw-memory
+
+(
+@|repl )
+
+@eval ( -- )
+
+	( pre cleanup )
+	;rom .emu/length LDZ2 mclr
+	( parse )
+	assemble
+	;write/head LDA2 .emu/length STZ2
+	( cleanup )
+	;source sclr
+	clear-source
+
+!draw-state
+
+@run ( -- )
+
+	reset
+	#00 .emu/sleep STZ
+	#f000
+	&w
+		step
+		.emu/sleep LDZ ?&end
+		INC2 ORAk ?&w
+	&end
+	POP2
+
+JMP2r
+
+@print-state ( -- )
+
+	;rst ;&rst-txt pstk
+	;wst ;&wst-txt pstk
+
+JMP2r
+	&rst-txt "<rst> 20 $1
+	&wst-txt "<wst> 20 $1
+
+@pstk ( stack* name* -- )
+
+	pstr
+	DUP2 #00fe ADD2 LDA #00 SWP ADD2k NIP2 SWP2 EQU2k ?&end
+	&l
+		LDAk phex/b #2018 DEO
+		INC2 GTH2k ?&l
+	&end
+	POP2 POP2
+	#0a18 DEO
+
+JMP2r
+
+(
+@|drawing )
+
+@redraw-all ( -- )
+
+	( stack names )
+	#01 ;draw-chr/color STA
+	#0098 .Screen/x DEO2
+	#0010 .Screen/y DEO2
+	;dict/ws draw-str
+	#00b0 .Screen/x DEO2
+	;dict/rs draw-str
+
+	( buttons )
+	#00c8 .Screen/x DEO2
+	#0008 .Screen/y DEO2
+	( back )
+	;controls-icns/back ;button-icn draw-button
+	( play/pause )
+	;controls-icns/play ;controls-icns/pause .emu/sleep LDZ STHk [ JMP SWP2 POP2 ]
+	;button-icn ;button-icn/active STHr [ JMP SWP2 POP2 ]
+		draw-button
+	( step )
+	;controls-icns/step ;button-icn draw-button
+	( knobs )
+	#0170 .Screen/x DEO2
+	#000c .Screen/y DEO2
+	.emu/rate LDZ draw-knob
+
+@draw-state ( -- )
+
+	draw-instructions
+	draw-stacks
+	draw-memory
+	draw-error
+
+( >> )
+
+@draw-pc ( -- )
+
+	#0128 .Screen/x DEO2
+	#0010 .Screen/y DEO2
+	;dict/pc draw-str
+	.uxn/pc LDZ2
+
+!draw-short
+
+@draw-instructions ( -- )
+
+	#01 .Screen/auto DEO
+	#0010 .Screen/x DEO2
+	#0028 .Screen/y DEO2
+	#2000
+	&l
+		#0010 .Screen/x DEO2
+		#00 OVR .uxn/pc LDZ2 #55 SFT2 ADD2
+			.scroll LDZ2 ADD2
+			draw-instruction
+		.Screen/y DEI2k #0008 ADD2 ROT DEO2
+		INC GTHk ?&l
+	POP2
+
+JMP2r
+
+@draw-instruction ( addr* -- )
+
+	DUP2 find-symbol LDA2 OVR2 EQU2 ?&label
+	INC2k .emu/length LDZ2 GTH2 ?&empty
+	( line )
+	#01 .Screen/auto DEO
+	DUP2 get-color ;draw-chr/color STA
+	( text )
+	DUP2 draw-short #20 draw-chr
+	;rom ADD2
+		LDAk draw-byte #20 draw-chr
+		LDAk draw-chr #20 draw-chr
+		LDA draw-opcode
+	#0090
+
+!draw-fill
+
+&empty ( addr* -- )
+
+	#01 .Screen/auto DEO
+	DUP2 get-color ;draw-chr/color STA
+	draw-short #20 draw-chr
+	LIT "- draw-empty
+	#0090
+
+!draw-fill ( .. )
+
+&label ( addr* -- )
+
+	#080c OVR2 .uxn/pc LDZ2 EQU2 STHk [ JMP SWP POP ] ;draw-chr/color STA
+	find-symbol INC2 INC2 #000e draw-strlen
+	#0088 draw-fill
+	;cap-icn .Screen/addr DEO2
+	#03 STHr SUB .Screen/sprite DEO
+
+JMP2r
+
+@draw-opcode ( byte -- )
+
+	DUP #20 EQU ?&jci
+	DUP #40 EQU ?&jmi
+	DUP #60 EQU ?&jsi
+	DUP #00 EQU ?&brk
+	#00 OVR #1f AND #20 SFT2 ;opcodes ADD2 draw-str
+	DUP #20 AND #00 EQU ?&no-2 LIT "2 draw-chr &no-2
+	DUP #1f AND #00 EQU ?&no-k
+	DUP #80 AND #00 EQU ?&no-k LIT "k draw-chr &no-k
+	DUP #40 AND #00 EQU ?&no-r LIT "r draw-chr &no-r
+	POP
+
+JMP2r
+	&brk POP ;opcodes/brk !draw-str
+	&jmi POP ;opcodes/jmi !draw-str
+	&jci POP ;opcodes/jci !draw-str
+	&jsi POP ;opcodes/jsi !draw-str
+
+@draw-stacks ( -- )
+
+	#0098 .Screen/x DEO2
+	#0028 .Screen/y DEO2
+	;wst draw-stack
+
+	#00b0 .Screen/x DEO2
+	#0028 .Screen/y DEO2
+	;rst
+
+!draw-stack
+
+@draw-bal ( byte -- )
+
+	#01 .Screen/auto DEO
+	DUP #1f AND #30 SFT #00 SWP ;uxnbal ADD2 .Screen/addr DEO2
+	#02 .Screen/sprite DEO
+	#00 .Screen/auto DEO
+	( short )
+	DUP #20 AND #00 EQU ?&no-2
+		;uxnbal/2 .Screen/addr DEO2
+		#4a .Screen/sprite DEO
+		&no-2
+	DUP #40 AND #00 EQU ?&no-r
+		;uxnbal/r .Screen/addr DEO2
+		#4f .Screen/sprite DEO
+		&no-r
+	DUP #80 AND #00 EQU ?&no-k
+		;uxnbal/k .Screen/addr DEO2
+		#45 .Screen/sprite DEO
+		&no-k
+	POP
+	#01 .Screen/auto DEO
+
+JMP2r
+
+@draw-stack ( stack* -- )
+
+	DUP2 #00fe ADD2 LDA ,&sp STR
+	STH2
+	#2000
+	&loop
+		( highlight )
+		INCk [ LIT &sp $1 ] EQU STH
+			#0901 STHr [ JMP SWP POP ] ;draw-chr/color STA
+		DUP ,&sp LDR LTH ?&no-empty
+			LIT ". draw-empty
+			!&continue
+			&no-empty
+		#00 OVR STH2kr ADD2 LDA draw-byte
+		&continue
+		.Screen/x DEI2k #0010 SUB2 ROT DEO2
+		.Screen/y DEI2k #0008 ADD2 ROT DEO2
+		INC GTHk ?&loop
+	POP2
+	POP2r
+
+JMP2r
+
+@draw-empty ( char -- )
+
+	DUP draw-chr
+
+!draw-chr
+
+@draw-memory ( -- )
+
+	#0000
+	&l
+		#00
+			OVRk #07 AND #0018 MUL2 #00c8 ADD2 .Screen/x DEO2
+			DUP2 #33 SFT #0028 ADD2 .Screen/y DEO2
+			( highlight )
+			DUP2 .uxn/pc LDZ2 #88 SFT2 ADD2
+			.scroll LDZ2 #33 SFT2 ADD2
+				DUP2 get-color ;draw-chr/color STA
+				draw-cell
+		INC NEQk ?&l
+	POP2
+
+JMP2r
+
+@draw-cell ( offset* addr* -- )
+
+	( empty )
+	DUP2 .emu/length LDZ2 LTH2 ?&exists
+		POP2 POP2
+		LIT "- !draw-empty
+		&exists
+	( program )
+	NIP2 ;rom ADD2 LDA
+
+!draw-byte
+
+@draw-event ( str* -- )
+
+	#0010 .Screen/x DEO2
+	#0010 .Screen/y DEO2
+	#01 .Screen/auto DEO
+	( draw time )
+	#03 ;draw-chr/color STA
+	.emu/time LDZ2 draw-dec
+	#20 draw-chr
+	( name )
+	#01 ;draw-chr/color STA
+	draw-str
+	#0090
+
+( >> )
+
+@draw-fill ( max* -- )
+
+	.Screen/x DEI2 SUB2 #03 SFT2 NIP
+	#00
+	&l
+		#20 draw-chr
+		INC GTHk ?&l
+	POP2
+
+JMP2r
+
+@clear-source ( -- )
+
+	#00 ;draw-chr/color STA
+	#0010 .Screen/x DEO2
+	.Screen/height DEI2 #0028 SUB2 .Screen/y DEO2
+	.Screen/width DEI2
+
+!draw-fill
+
+@draw-source ( -- )
+
+	#0010 .Screen/x DEO2
+	.Screen/height DEI2 #0028 SUB2 .Screen/y DEO2
+	#01 ;draw-chr/color STA
+
+	;source
+		DUP2 slen #002d LTH2 ?&no-follow
+			DUP2 slen #002d SUB2 ADD2
+			&no-follow
+		draw-str
+
+	#08 ;draw-chr/color STA
+	#20 draw-chr
+
+JMP2r
+
+@draw-error ( -- )
+
+	.uxn/err LDZ
+		DUP ?&on-error
+	POP
+
+JMP2r
+
+&on-error ( code -- )
+
+	#0010 .Screen/x DEO2
+	.Screen/height DEI2 #0018 SUB2 .Screen/y DEO2
+	#03 ;draw-chr/color STA
+	;dict/err draw-str
+	#01 ;draw-chr/color STA
+	#00 .uxn/src LDZ2 ;rst EQU2 DUP ADD ;sources ADD2 LDA2 draw-str
+	#00 SWP DUP ADD ;errors ADD2 LDA2
+
+!draw-str
+
+@draw-button ( icon* style* -- )
+
+	( frame )
+	#26 .Screen/auto DEO
+	.Screen/y DEI2 STH2
+	( -> ) .Screen/addr DEO2
+	#01 .Screen/sprite DEOk DEOk DEO
+	( icon )
+	#01 .Screen/auto DEO
+	.Screen/x DEI2k #0008 ADD2 ROT DEO2
+	( -> ) .Screen/addr DEO2
+	STH2kr #0008 ADD2 .Screen/y DEO2
+	#01 .Screen/sprite DEO
+	.Screen/x DEI2k #0008 ADD2 ROT DEO2
+	STH2r .Screen/y DEO2
+
+JMP2r
+
+@draw-dec ( short* -- )
+
+	#01 .Screen/auto DEO
+	#00 ,&z STR
+	#2710 ,&parse JSR
+	#03e8 ,&parse JSR
+	#0064 ,&parse JSR
+	#000a ,&parse JSR
+	NIP #30 ADD !draw-chr
+	&parse
+		DIV2k DUPk [ LIT &z $1 ] EQU ?&skip
+		DUP #30 ADD draw-chr #ff ,&z STR
+		&skip POP MUL2 SUB2
+	JMP2r
+
+@draw-short ( short* -- )
+
+	SWP draw-byte
+
+@draw-byte ( byte -- )
+
+	DUP #04 SFT draw-hex
+
+@draw-hex ( char -- )
+
+	#0f AND DUP #09 GTH #27 MUL ADD #30 ADD
+
+@draw-chr ( char -- )
+
+	DUP #20 SUB #5f GTH ?&blank
+	#20 SUB #00 SWP #30 SFT2 ;font ADD2 .Screen/addr DEO2
+	[ LIT &color 01 ] .Screen/sprite DEO
+
+JMP2r
+	&blank
+	POP
+	;blank-icn .Screen/addr DEO2
+	,&color LDR .Screen/sprite DEO
+	JMP2r
+
+@draw-str ( str* -- )
+
+	LDAk #01 SUB #7f GTH ?&skip
+	#01 .Screen/auto DEO
+	&w
+		LDAk draw-chr
+		INC2 LDAk ?&w
+	&skip
+	POP2
+
+JMP2r
+
+@draw-strlen ( str* len* -- )
+
+	ADD2k NIP2 SWP2
+	#01 .Screen/auto DEO
+	&l
+		LDAk #01 SUB #7f GTH ?&skip
+		LDAk draw-chr
+		INC2
+		GTH2k ?&l
+	&skip
+	POP2 POP2
+
+JMP2r
+
+@draw-knob ( value -- )
+
+	STH
+	.Screen/x DEI2 ,&x STR2
+	.Screen/y DEI2 ,&y STR2
+	( circle )
+	;knob-icns .Screen/addr DEO2
+	#16 .Screen/auto DEO
+	#01 .Screen/sprite DEOk DEO
+	#00 .Screen/auto DEO
+	( marker )
+	.Screen/x DEI2 #0000 STHkr ;knob-offsetx ADD2 LDA ADD2 .Screen/x DEO2
+	.Screen/y DEI2 #0010 SUB2 #0000 STHkr ;knob-offsety ADD2 LDA ADD2 .Screen/y DEO2
+	;knob-icns/marker .Screen/addr DEO2
+	#05 .Screen/sprite DEO
+	[ LIT2 &x $2 ] #0004 ADD2 .Screen/x DEO2
+	[ LIT2 &y $2 ] #0010 ADD2 .Screen/y DEO2
+	( value )
+	STHr draw-hex
+	#00 .Screen/sprite DEO
+
+JMP2r
+
+@append-char ( char -- )
+
+	DUP #1f GTH ?&valid
+		POP #0030 ,&x STR2 JMP2r
+		&valid
+	#0010 .Screen/x DEO2
+	.Screen/height DEI2 #0010 SUB2 .Screen/y DEO2
+	#03 ;draw-chr/color STA
+	;dict/out draw-str
+	#01 ;draw-chr/color STA
+	[ LIT2 &x 0030 ] .Screen/x DEO2
+	draw-chr
+	#20 draw-chr
+	,&x LDR2 #0008 ADD2 ,&x STR2
+
+JMP2r
+
+@get-color ( addr* -- color )
+
+	( target )
+	DUP2 ;wst peek-stack NEQ2 ?&no-wst
+		POP2 #03 JMP2r
+		&no-wst
+	DUP2 ;rst peek-stack NEQ2 ?&no-rst
+		POP2 #02 JMP2r
+		&no-rst
+	#0901 SWP2 .uxn/pc LDZ2 EQU2 [ JMP SWP POP ]
+
+JMP2r
+
+@peek-stack ( stack* -- value* )
+
+	#00 ROT ROT STH2k #00fe ADD2 LDA STH2r ADD2 #0002 SUB2 LDA2
+
+JMP2r
+
+@find-symbol ( addr* -- sym* )
+
+	,&t STR2
+	;sym
+	&l
+		LDA2k INC2 [ LIT2 &t $2 ] GTH2 ?&end
+		INC2k INC2 LDA #00 EQU ?&end
+		INC2 INC2 scap INC2 ,&l JMP
+	&end
+
+JMP2r
+
+@update-cursor ( color addr* -- )
+
+	#00 .Screen/auto DEO
+	#40 draw-cursor
+	.Mouse/x DEI2 ,draw-cursor/x STR2
+	.Mouse/y DEI2 ,draw-cursor/y STR2
+	.Screen/addr DEO2
+
+@draw-cursor ( color -- )
+
+	[ LIT2 &x $2 ] .Screen/x DEO2
+	[ LIT2 &y $2 ] .Screen/y DEO2
+	.Screen/sprite DEO
+
+JMP2r
+
+(
+@|tables )
+
+@errors
+	=dict/underflow =dict/overflow =dict/divzero
+
+@sources
+	=dict/ws =dict/rs
+
+@dict
+	&ws "WS 20 $1
+	&rs "RS 20 $1
+	&pc "PC: $1
+	&out "OUT 20 $1
+	&err "ERR 20 $1
+	&ready "Ready $1
+	&underflow "Underflow $1
+	&overflow "Overflow $1
+	&divzero "Zero-Div $1
+	&breakpoint "Breakpoint $1
+	&halt "Halted $1
+	&end "Ended $1
+	&step "Steps $1
+	&in ", 20 "in 20 $1
+	&dot ". 0a $1
+	&reset "INIT $1
+
+@err "!! 20 "Error: 20 $1
+	&duplicate "Duplicate $1
+	&number "Number $1
+	&reference "Reference $1
+	&distance "Distance $1
+	&invalid "Invalid $1
+	&mode "Mode $1
+	&rewind "Rewind $1
+
+@opcodes
+	"LIT $1 "INC $1 "POP $1 "NIP $1 "SWP $1 "ROT $1 "DUP $1 "OVR $1
+	"EQU $1 "NEQ $1 "GTH $1 "LTH $1 "JMP $1 "JCN $1 "JSR $1 "STH $1
+	"LDZ $1 "STZ $1 "LDR $1 "STR $1 "LDA $1 "STA $1 "DEI $1 "DEO $1
+	"ADD $1 "SUB $1 "MUL $1 "DIV $1 "AND $1 "ORA $1 "EOR $1 "SFT $1
+	&brk "BRK $1 &jmi "JMI $1 &jci "JCI $1 &jsi "JSI $1
+
+(
+@|utils )
+
+( theme )
+
+@load-theme ( -- )
+
+	;&path .File/name DEO2
+	#0002 .File/length DEO2
+	[ LIT2 -System/debug -System/r ]
+	&loop
+		;&buf .File/read DEO2
+		.File/success DEI2 ORA ?&end
+			POP2 JMP2r &end
+		DUP [ LIT2 &buf $2 ] ROT DEO2
+		INC INC NEQk ?&loop
+	POP2
+
+JMP2r
+	&path ".theme $1
+
+@mclr ( src* len* -- ) OVR2 ADD2 SWP2 &l STH2k #00 STH2r STA INC2 GTH2k ,&l JCN POP2 POP2 JMP2r
+@scap ( str* -- end* ) LDAk ?&w JMP2r &w INC2 LDAk ?&w JMP2r
+@sput ( chr str* -- ) scap INC2k #00 ROT ROT STA STA JMP2r
+@spop ( str* -- ) LDAk #00 EQU ?&skip #0000 SWP2 scap #0001 SUB2 STA2 &skip JMP2r
+@slen ( str* -- len* ) DUP2 scap SWP2 SUB2 JMP2r
+@scat ( src* dst* -- ) scap
+@scpy ( src* dst* -- ) OVR2 LDA ?&e POP2 POP2 JMP2r &e STH2 &w LDAk STH2kr STA INC2r INC2 LDAk ?&w POP2 #00 STH2r STA JMP2r
+@sclr ( str* -- ) LDAk ?&w POP2 JMP2r &w STH2k #00 STH2r STA INC2 LDAk ?&w POP2 JMP2r
+@scmp ( a* b* -- f ) STH2 &l LDAk LDAkr STHr ANDk #00 EQU ?&e NEQk ?&e POP2 INC2 INC2r !&l &e NIP2 POP2r EQU JMP2r
+@scmp3 ( a* b* -- f ) LDA2k ROT2 LDA2k ROT2 EQU2 STH INC2 LDA2 SWP2 INC2 LDA2 EQU2 STHr AND JMP2r
+@chex ( c -- val|ff ) LIT "0 SUB DUP #09 GTH [ JMP JMP2r ] #27 SUB DUP #0f GTH [ JMP JMP2r ] POP #ff JMP2r
+@shex ( str* -- val* ) LIT2r 0000 &w LITr 40 SFT2r LITr 00 LDAk chex STH ADD2r INC2 LDAk ?&w POP2 STH2r JMP2r
+@skey ( key buf -- proc ) OVR #21 LTH ?&eval #00 SWP sput #00 JMP2r &eval POP2 #01 JMP2r
+@pstr ( str* -- ) LDAk ?&w POP2 JMP2r &w LDAk #19 DEO INC2 LDAk ?&w POP2 JMP2r
+@phex ( short* -- ) SWP ,&b JSR &b ( byte -- ) DUP #04 SFT ,&c JSR &c ( char -- ) #0f AND DUP #09 GTH #27 MUL ADD #30 ADD #18 DEO JMP2r
+
+~src/asm.tal
+

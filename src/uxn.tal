@@ -1,0 +1,156 @@
+(
+@|emulator )
+
+@reset ( -- )
+
+	#00 .uxn/err STZ
+	#0100 .uxn/pc STZ2
+	#0000 .emu/time STZ2
+	#0000 ;wst/ptr STA2
+	#0000 ;rst/ptr STA2
+	#0030 ;append-char/x STA2
+
+JMP2r
+
+@step ( -- )
+
+	( get opcode )
+	.uxn/pc LDZ2 ;rom ADD2 LDA
+		( exit on BRK )
+		DUP #00 EQU ?&halt
+		( move PC )
+		.uxn/pc LDZ2k INC2 ROT STZ2
+		( short mode )
+		DUP #20 AND #00 NEQ .uxn/2 STZ
+		( return mode )
+		DUP #40 AND #00 NEQ STH ;rst ;wst STHr [ JMP SWP2 ] .uxn/dst STZ2 .uxn/src STZ2
+		( keep mode )
+		DUP #80 AND #00 NEQ ;pop/keep STA
+		( copy pop pointer )
+		.uxn/src LDZ2 #00fe ADD2 LDAk DUP SWP2 STA2
+		( get routine )
+		#00 OVR #1f AND DUP2 ADD2 ;optbl ADD2 LDA2 JSR2
+		( incr time )
+		.emu/time LDZ2k INC2 ROT STZ2
+		( check err )
+		.uxn/err LDZ ?&halt
+	POP
+
+JMP2r
+
+&halt ( opcode -- )
+
+	STH
+	;dict/halt ;dict/end STHr [ JMP SWP2 POP2 ]
+		draw-event
+	#01 .emu/sleep STZ
+
+JMP2r
+
+(
+@|primitives )
+
+( TODO: Catch errors when read/write outside of bounds )
+
+@push ( v* -- ) .uxn/2 LDZ ?&16
+&8 ( v* -- )
+	NIP
+	&byte
+	( stack ptr* ) .uxn/src LDZ2 #00fe ADD2 STH2k
+	( err 02 overflow ) LDA #ff EQU .uxn/err LDZk ROT DUP ADD ORA SWP STZ
+	( incr ) .uxn/src LDZ2 #00 LDAkr STHr INCk STH2r STA
+	( save ) ADD2 STA
+
+JMP2r
+&16 ( v* -- ) SWP push/byte !push/byte
+
+@pop ( -- v* ) .uxn/2 LDZ ?&16
+&8 ( -- v* )
+	#00
+	&byte
+	.uxn/src LDZ2 #00fe ADD2 #00 [ LIT &keep $1 ] ADD2 STH2k
+	( err 01 underflow ) LDA #00 EQU .uxn/err LDZk ROT ORA SWP STZ
+	( decr ) .uxn/src LDZ2 LDAkr STHr #01 SUB STH2kr STA
+	( load ) #00 LDAr STHr ADD2 LDA
+
+JMP2r
+&16 ( -- v* ) pop/byte pop/byte SWP JMP2r
+
+@poke ( v* a* -- ) .uxn/2 LDZ ?&16
+&8 ;rom ADD2 STA JMP2r
+&16 ;rom ADD2 STA2 JMP2r
+
+@peek ( a* -- v* ) .uxn/2 LDZ ?&16
+&8 ;rom ADD2 LDA #00 SWP JMP2r
+&16 ;rom ADD2 LDA2 JMP2r
+
+@warp ( a* -- ) .uxn/2 LDZ ?&16
+&8 NIP rel
+&16 .uxn/pc STZ2 JMP2r
+
+( sint8 -> sint16 )
+
+@rel ( a* -- ) DUP #7f GTH #ff MUL SWP .uxn/pc LDZ2 ADD2 JMP2r
+
+@devw ( v* p* -- ) DUP #10 AND ?&console .uxn/2 LDZ ?&16
+&8 NIP DEO POP JMP2r
+&16 NIP DEO2 JMP2r
+&console !send
+
+@devr ( p* -- ) .uxn/2 LDZ ?devr/16
+&8 NIP DEI #00 SWP !push
+&16 NIP DEI2 !push
+
+(
+@|library )
+
+( TODO: Catch Div-by-zero )
+
+@op-lit
+	DUP #20 EQU ?&op-jci
+	DUP #40 EQU ?&op-jmi
+	DUP #60 EQU ?&op-jsi
+	.uxn/pc LDZ2 DUP2 peek push #0001 .uxn/2 LDZ ADD ADD2 !warp/16
+&op-jci ;wst .uxn/src STZ2 pop/8 ?&op-jmi ( else ) .uxn/pc LDZ2k INC2 INC2 ROT STZ2 JMP2r
+&op-jsi ;rst .uxn/src STZ2 .uxn/pc LDZ2 INC2 INC2 push/16 ( fall )
+&op-jmi .uxn/pc LDZ2 DUP2 peek/16 ADD2 INC2 INC2 !warp/16
+( ALU )
+@op-inc pop INC2 !push
+@op-pop pop POP2 JMP2r
+@op-nip pop pop POP2 !push
+@op-swp pop pop SWP2 push !push
+@op-rot pop pop pop ROT2 ROT2 push push !push
+@op-dup pop DUP2 push !push
+@op-ovr pop pop SWP2 OVR2 push push !push
+@op-equ pop pop EQU2 !push/byte
+@op-neq pop pop NEQ2 !push/byte
+@op-gth pop pop SWP2 GTH2 !push/byte
+@op-lth pop pop SWP2 LTH2 !push/byte
+@op-jmp pop !warp
+@op-jcn pop pop/8 NIP ?warp POP2 JMP2r
+@op-jsr pop .uxn/pc LDZ2 .uxn/dst LDZ2 .uxn/src STZ2 push/16 !warp
+@op-sth pop .uxn/dst LDZ2 .uxn/src STZ2 !push
+@op-ldz pop/8 peek !push
+@op-stz pop/8 pop SWP2 !poke
+@op-ldr pop/8 NIP rel peek !push
+@op-str pop/8 pop SWP2 NIP rel !poke
+@op-lda pop/16 peek !push
+@op-sta pop/16 pop SWP2 !poke
+@op-dei pop/8 !devr
+@op-deo pop/8 pop SWP2 !devw
+@op-add pop pop ADD2 !push
+@op-sub pop pop SWP2 SUB2 !push
+@op-mul pop pop MUL2 !push
+@op-div pop pop SWP2 DIV2 !push
+@op-and pop pop AND2 !push
+@op-ora pop pop ORA2 !push
+@op-eor pop pop EOR2 !push
+@op-sft pop/8 pop SWP2 NIP SFT2 !push
+
+@optbl [
+	=op-lit =op-inc =op-pop =op-nip =op-swp =op-rot =op-dup =op-ovr
+	=op-equ =op-neq =op-gth =op-lth =op-jmp =op-jcn =op-jsr =op-sth
+	=op-ldz =op-stz =op-ldr =op-str =op-lda =op-sta =op-dei =op-deo
+	=op-add =op-sub =op-mul =op-div =op-and =op-ora =op-eor =op-sft ]
+
+~src/assets.tal

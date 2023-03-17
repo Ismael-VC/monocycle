@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
 ASM="uxnasm"
-EMU="uxn11"
+EMU="uxnemu"
 LIN="uxncli $HOME/roms/uxnlin.rom"
 
 SRC="src/bicycle.tal"
@@ -9,7 +9,7 @@ DST="bin/bicycle.rom"
 
 CPY="$HOME/roms"
 ETC=""
-ARG=""
+ARG="hello world\0"
 
 echo ">> Cleaning"
 rm -rf bin
@@ -31,5 +31,6 @@ then
 fi
 
 echo ">> Running $DST"
-$EMU $DST $ARG
+# $EMU $DST $ARG
+uxnemu ~/roms/left.rom etc/example.txt | uxnemu $DST
 
