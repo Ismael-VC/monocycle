@@ -1,4 +1,4 @@
 
-#12 #34 ADD
+#12 #34 ADD DUP INCk SUBk 
 
 
