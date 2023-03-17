@@ -57,7 +57,7 @@ BRK
 
 &eval ( char -> )
 
-	POP
+	POP #0a ,&ptr LDR2 STA
 	( pre cleanup )
 	;rom .emu/length LDZ2 mclr
 	( parse )
@@ -114,16 +114,25 @@ JMP2r
 @redraw ( -- )
 
 	draw-clear
-	
+
 	#0010
 		DUP2 .Screen/x DEO2
 		.Screen/y DEO2
-	
 	;source
 		DUP2 draw-str
-	 
 	draw-stacks
 	draw-spacer
+
+	( draw size )
+	#0010 .Screen/x DEO2
+	#0030 .Screen/y DEO2
+	;dict/assembled-in draw-str
+	;write/length LDA2 #00ff SUB2 draw-dec
+	;dict/bytes draw-str
+	( draw time )
+	;dict/completed-in draw-str
+	.emu/time LDZ2 draw-dec
+	;dict/cycles draw-str
 
 JMP2r
 
@@ -197,6 +206,25 @@ JMP2r
 	.Screen/x DEO2
 
 JMP2r
+
+@draw-dec ( short* -- )
+
+	#00 ,&z STR
+	( sign )
+	DUP2 #4000 AND2 #0000 EQU2 ?&positive
+		LIT "- draw-char #4000 SWP2 SUB2 #3fff AND2
+		&positive
+	#2710 draw-dec/parse
+	#03e8 draw-dec/parse
+	#0064 draw-dec/parse
+	#000a draw-dec/parse
+	NIP #30 ADD !draw-char ( .. )
+
+	&parse
+		DIV2k DUPk [ LIT &z $1 ] EQU ?&skip
+		DUP #30 ADD draw-char #ff ,&z STR
+		&skip POP MUL2 SUB2
+	JMP2r
 
 @draw-event ( str* -- )
 
