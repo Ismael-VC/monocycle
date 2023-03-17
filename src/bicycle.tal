@@ -7,6 +7,7 @@
 
 |0000
 
+	@pointer &x $2 &y $2
 	( system )
 	@emu &sleep $1 &rate $1 &time $2 &length $2
 	@uxn &pc $2 &src $2 &dst $2 &err $1 &2 $1
@@ -14,16 +15,36 @@
 |0100
 
 	( theme )
-	#f05f .System/r DEO2
-	#f0bf .System/g DEO2
-	#f0af .System/b DEO2
+	#f05a .System/r DEO2
+	#f0ba .System/g DEO2
+	#f0aa .System/b DEO2
 	( size )
 	#01c0 .Screen/width DEO2
 	#00a0 .Screen/height DEO2
 	( mode )
 	#15 .Screen/auto DEO
+	draw-spacer
 
+	( unlock )
 	;on-console .Console/vector DEO2
+	;on-mouse .Mouse/vector DEO2
+
+BRK
+
+@on-mouse ( -> )
+
+	#40 draw-pointer
+	.Mouse/x DEI2 .pointer/x STZ2
+	.Mouse/y DEI2 .pointer/y STZ2
+	.Mouse/state DEI #00 NEQ #41 ADD draw-pointer
+
+	.Mouse/state DEI ?&on-mouse-down
+
+BRK
+
+&on-mouse-down ( -> )
+
+	( TODO: )
 
 BRK
 
@@ -103,13 +124,13 @@ JMP2r
 
 	( ws )
 	#0010 .Screen/x DEO2
-	.Screen/height DEI2 #0030 SUB2 .Screen/y DEO2
-	;dict/ws draw-str
+	.Screen/height DEI2 #0028 SUB2 .Screen/y DEO2
+	;dict/ws #03 draw-str-color
 	;wst draw-stack
 	( rs )
 	#0010 .Screen/x DEO2
-	.Screen/height DEI2 #0020 SUB2 .Screen/y DEO2
-	;dict/rs draw-str
+	.Screen/height DEI2 #0018 SUB2 .Screen/y DEO2
+	;dict/rs #03 draw-str-color
 	;rst
 
 @draw-stack ( stack* -- )
@@ -162,7 +183,11 @@ JMP2r
 
 JMP2r
 
-@draw-str ( str -- )
+@draw-str-color ( str* color -- )
+
+	;draw-char/color STA
+
+@draw-str ( str* -- )
 
 	&while
 		LDAk draw-char
@@ -170,6 +195,31 @@ JMP2r
 	POP2
 
 JMP2r
+
+@draw-pointer ( color -- )
+
+	.pointer/x LDZ2 .Screen/x DEO2
+	.pointer/y LDZ2 .Screen/y DEO2
+	;pointer-icn .Screen/addr DEO2
+	.Screen/sprite DEOk DEO
+
+JMP2r
+
+@draw-spacer ( -- )
+
+	#0000 .Screen/x DEO2
+	.Screen/height DEI2 #0038 SUB2 .Screen/y DEO2
+	;jagged-icn .Screen/addr DEO2
+	#01 .Screen/auto DEO
+	#00 .Screen/width DEI2 #03 SFT2 NIP SUB
+	&l
+		#01 .Screen/sprite DEO
+		INC DUP ?&l
+	POP
+	#15 .Screen/auto DEO
+
+JMP2r
+
 
 (
 @|stdlib )

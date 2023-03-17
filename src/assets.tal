@@ -44,6 +44,8 @@
 (
 @|sprites )
 
+@jagged-icn
+0000 2050 8805 0200
 @pointer-icn ( from Symbolics )
 80c0 e0f0 f8fc feff f8d8 8c0c 0606 0000 0000 0000 0000 0000 0000 0000 0000 0000
 @font ( losangeles12 )
