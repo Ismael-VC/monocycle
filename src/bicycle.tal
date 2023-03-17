@@ -5,6 +5,12 @@
 |90 @Mouse &vector $2 &x $2 &y $2 &state $1 &chord $1
 |a0 @File &vector $2 &success $2 &stat $2 &delete $1 &append $1 &name $2 &length $2 &read $2 &write $2
 
+|0000
+
+	( system )
+	@emu &sleep $1 &rate $1 &time $2 &length $2
+	@uxn &pc $2 &src $2 &dst $2 &err $1 &2 $1
+
 |0100
 
 	( theme )
@@ -29,22 +35,50 @@ BRK
 
 &append ( c -- )
 
-	[ LIT2 &ptr =buf ] STH2k STA
+	[ LIT2 &ptr =input ] STH2k STA
 	INC2r STH2r ,&ptr STR2 BRK
 
 &eval ( char -> )
 
 	POP
 	( cleanup )
-	;buf
+	;input
 		DUP2 draw-text
 		DUP2 ;&ptr STA2
 		sclr
 
 BRK
 
+@send ( v* p* -- )
+
+	NIP
+	DUP #0e NEQ ?&no-debug
+		;dict/breakpoint draw-event
+		&no-debug
+	DUP #0f NEQ ?&no-halt
+		;dict/halt draw-event
+		&no-halt
+	DUP #18 NEQ ?&no-console
+		OVR append-char
+		&no-console
+	POP POP2
+
+JMP2r
+
+@append-char ( char -- )
+
+	#18 DEO
+
+JMP2r
+
 (
 @|drawing )
+
+@draw-event ( str* -- )
+
+	pstr
+
+JMP2r
 
 @draw-text ( text* -- )
 
@@ -81,9 +115,21 @@ JMP2r
 (
 @|stdlib )
 
-@sclr ( str* -- ) LDAk ,&w JCN POP2 JMP2r &w STH2k #00 STH2r STA INC2 LDAk ,&w JCN POP2 JMP2r
-@phex ( short* -- ) SWP phex/b &b DUP #04 SFT phex/c &c #0f AND DUP #09 GTH #27 MUL ADD #30 ADD #18 DEO JMP2r
-@pstr ( str* -- ) &w LDAk #18 DEO INC2 LDAk ?&w POP2 JMP2r
+	@mclr ( src* len* -- ) OVR2 ADD2 SWP2 &l STH2k #00 STH2r STA INC2 GTH2k ,&l JCN POP2 POP2 JMP2r
+	@scap ( str* -- end* ) LDAk ?&w JMP2r &w INC2 LDAk ?&w JMP2r
+	@sput ( chr str* -- ) scap INC2k #00 ROT ROT STA STA JMP2r
+	@spop ( str* -- ) LDAk #00 EQU ?&skip #0000 SWP2 scap #0001 SUB2 STA2 &skip JMP2r
+	@slen ( str* -- len* ) DUP2 scap SWP2 SUB2 JMP2r
+	@scat ( src* dst* -- ) scap
+	@scpy ( src* dst* -- ) OVR2 LDA ?&e POP2 POP2 JMP2r &e STH2 &w LDAk STH2kr STA INC2r INC2 LDAk ?&w POP2 #00 STH2r STA JMP2r
+	@sclr ( str* -- ) LDAk ?&w POP2 JMP2r &w STH2k #00 STH2r STA INC2 LDAk ?&w POP2 JMP2r
+	@scmp ( a* b* -- f ) STH2 &l LDAk LDAkr STHr ANDk #00 EQU ?&e NEQk ?&e POP2 INC2 INC2r !&l &e NIP2 POP2r EQU JMP2r
+	@scmp3 ( a* b* -- f ) LDA2k ROT2 LDA2k ROT2 EQU2 STH INC2 LDA2 SWP2 INC2 LDA2 EQU2 STHr AND JMP2r
+	@chex ( c -- val|ff ) LIT "0 SUB DUP #09 GTH [ JMP JMP2r ] #27 SUB DUP #0f GTH [ JMP JMP2r ] POP #ff JMP2r
+	@shex ( str* -- val* ) LIT2r 0000 &w LITr 40 SFT2r LITr 00 LDAk chex STH ADD2r INC2 LDAk ?&w POP2 STH2r JMP2r
+	@skey ( key buf -- proc ) OVR #21 LTH ?&eval #00 SWP sput #00 JMP2r &eval POP2 #01 JMP2r
+	@pstr ( str* -- ) LDAk ?&w POP2 JMP2r &w LDAk #19 DEO INC2 LDAk ?&w POP2 JMP2r
+	@phex ( short* -- ) SWP ,&b JSR &b ( byte -- ) DUP #04 SFT ,&c JSR &c ( char -- ) #0f AND DUP #09 GTH #27 MUL ADD #30 ADD #18 DEO JMP2r
 
-~src/assets.tal
+~src/asm.tal
 

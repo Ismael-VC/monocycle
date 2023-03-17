@@ -1,5 +1,48 @@
 (
-@|assets )
+@|tables )
+
+@errors
+	=dict/underflow =dict/overflow =dict/divzero
+
+@sources
+	=dict/ws =dict/rs
+
+@dict
+	&ws "WS 20 $1
+	&rs "RS 20 $1
+	&pc "PC: $1
+	&out "OUT 20 $1
+	&err "ERR 20 $1
+	&ready "Ready $1
+	&underflow "Underflow $1
+	&overflow "Overflow $1
+	&divzero "Zero-Div $1
+	&breakpoint "Breakpoint $1
+	&halt "Halted $1
+	&end "Ended $1
+	&step "Steps $1
+	&in ", 20 "in 20 $1
+	&dot ". 0a $1
+	&reset "INIT $1
+
+@err "!! 20 "Error: 20 $1
+	&duplicate "Duplicate $1
+	&number "Number $1
+	&reference "Reference $1
+	&distance "Distance $1
+	&invalid "Invalid $1
+	&mode "Mode $1
+	&rewind "Rewind $1
+
+@opcodes
+	"LIT $1 "INC $1 "POP $1 "NIP $1 "SWP $1 "ROT $1 "DUP $1 "OVR $1
+	"EQU $1 "NEQ $1 "GTH $1 "LTH $1 "JMP $1 "JCN $1 "JSR $1 "STH $1
+	"LDZ $1 "STZ $1 "LDR $1 "STR $1 "LDA $1 "STA $1 "DEI $1 "DEO $1
+	"ADD $1 "SUB $1 "MUL $1 "DIV $1 "AND $1 "ORA $1 "EOR $1 "SFT $1
+	&brk "BRK $1 &jmi "JMI $1 &jci "JCI $1 &jsi "JSI $1
+
+(
+@|sprites )
 
 @pointer-icn ( from Symbolics )
 80c0 e0f0 f8fc feff f8d8 8c0c 0606 0000 0000 0000 0000 0000 0000 0000 0000 0000
@@ -108,6 +151,23 @@
 @cursor-icn
 0000 0000 1c3e 7e7e 7c38 0000 0000 0000
 
-@buf
+@input $400
 
+(
+@|asm )
+
+@token $20
+@scope $20
+@sublabel $20
+@source $2000
+
+(
+@|uxn )
+
+@sym $2000
+
+@wst $fe &ptr $2
+@rst $fe &ptr $2
+@dev $100
+@rom $100 &reset
 

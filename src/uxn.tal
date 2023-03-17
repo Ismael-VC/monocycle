@@ -8,7 +8,6 @@
 	#0000 .emu/time STZ2
 	#0000 ;wst/ptr STA2
 	#0000 ;rst/ptr STA2
-	#0030 ;append-char/x STA2
 
 JMP2r
 
