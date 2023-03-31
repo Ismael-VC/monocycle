@@ -11,6 +11,9 @@
 	&ws "WS 20 $1
 	&rs "RS 20 $1
 	&pc "PC: $1
+	&console "Console 20 $1
+	&error "Error 20 $1
+	&empty "Empty $1
 	&out "OUT 20 $1
 	&err "ERR 20 $1
 	&assembled-in "Assembled 20 "in 20 $1

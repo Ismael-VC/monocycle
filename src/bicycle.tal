@@ -10,6 +10,8 @@
 	( system )
 	@emu &sleep $1 &rate $1 &time $2 &length $2
 	@uxn &pc $2 &src $2 &dst $2 &err $1 &2 $1
+	( buffers )
+	@console-buf $80
 
 |0100
 
@@ -60,10 +62,12 @@ BRK
 	POP #0a ,&ptr LDR2 STA
 	( pre cleanup )
 	;rom .emu/length LDZ2 mclr
+	;console-buf sclr
 	( parse )
 	assemble
 	;write/head LDA2 .emu/length STZ2
 	( let's go! )
+	draw-clear
 	run redraw
 	( cleanup )
 	;source
@@ -104,7 +108,12 @@ JMP2r
 
 @append-char ( char -- )
 
-	#18 DEO
+	;console-buf
+	DUP2 slen #007f LTH2 ?&continue
+		DUP2 sclr
+		&continue
+	sput
+	draw-console
 
 JMP2r
 
@@ -113,19 +122,19 @@ JMP2r
 
 @redraw ( -- )
 
-	draw-clear
-
 	#0010
 		DUP2 .Screen/x DEO2
 		.Screen/y DEO2
 	;source
-		DUP2 draw-str
+	draw-console
+	draw-error
 	draw-stacks
 	draw-spacer
 
 	( draw size )
 	#0010 .Screen/x DEO2
-	#0030 .Screen/y DEO2
+	#0010 .Screen/y DEO2
+	#01 ;draw-char/color STA
 	;dict/assembled-in draw-str
 	;write/length LDA2 #00ff SUB2 draw-dec
 	;dict/bytes draw-str
@@ -166,7 +175,12 @@ JMP2r
 
 @draw-stack ( stack* -- )
 
-	DUP2 #00fe ADD2 LDA ,&sp STR
+	DUP2 #00fe ADD2 LDA
+		DUP ,&sp STR
+	?&no-new
+		POP2 ;dict/empty #01 !draw-str-color
+		&no-new
+
 	STH2
 	#2000
 	&loop
@@ -182,6 +196,23 @@ JMP2r
 		INC GTHk ?&loop
 	POP2
 	POP2r
+
+JMP2r
+
+@draw-console ( -- )
+
+	#0010 .Screen/x DEO2
+	.Screen/height DEI2 #0048 SUB2 .Screen/y DEO2
+	;dict/console #03 draw-str-color
+	;console-buf #01 draw-str-color
+
+JMP2r
+
+@draw-error ( -- )
+
+	#0010 .Screen/x DEO2
+	.Screen/height DEI2 #0038 SUB2 .Screen/y DEO2
+	;dict/error #03 draw-str-color
 
 JMP2r
 
@@ -236,6 +267,7 @@ JMP2r
 
 @draw-str ( str* -- )
 
+	#15 .Screen/auto DEO
 	&while
 		LDAk draw-char
 		INC2 LDAk ?&while
@@ -262,7 +294,7 @@ JMP2r
 @draw-spacer ( -- )
 
 	#0000 .Screen/x DEO2
-	.Screen/height DEI2 #0038 SUB2 .Screen/y DEO2
+	.Screen/height DEI2 #0058 SUB2 .Screen/y DEO2
 	;jagged-icn .Screen/addr DEO2
 	#01 .Screen/auto DEO
 	#00 .Screen/width DEI2 #03 SFT2 NIP SUB
