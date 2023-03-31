@@ -54,8 +54,17 @@ BRK
 
 &append ( c -- )
 
+	( convert invisible chars to spaces )
+	#20 GTHk [ JMP SWP POP ]
+	( if last char was space, skip )
+	DUP #20 NEQ OVR [ LIT &last 20 ] NEQ ORA ?&no-dup
+		POP BRK &no-dup
+	DUP ,&last STR
+	( append )
 	[ LIT2 &ptr =source ] STH2k STA
-	INC2r STH2r ,&ptr STR2 BRK
+	INC2r STH2r ,&ptr STR2
+
+BRK
 
 &eval ( char -> )
 
@@ -119,10 +128,8 @@ JMP2r
 	DUP2 slen #007f LTH2 ?&continue
 		DUP2 sclr
 		&continue
-	sput
-	draw-console
 
-JMP2r
+!sput
 
 (
 @|drawing )
@@ -208,9 +215,9 @@ JMP2r
 	#0010 .Screen/x DEO2
 	.Screen/height DEI2 #0038 SUB2 .Screen/y DEO2
 	;dict/error #03 draw-str-color
-	#00 .uxn/err LDZ DUP ADD ;errors ADD2 LDA2 #01 draw-str-color
+	#00 .uxn/err LDZ DUP ADD ;errors ADD2 LDA2 #01
 
-JMP2r
+!draw-str-color
 
 @draw-asm ( -- )
 
