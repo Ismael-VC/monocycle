@@ -131,19 +131,8 @@ JMP2r
 	draw-stacks
 	draw-spacer
 
-	( draw size )
-	#0010 .Screen/x DEO2
-	#0010 .Screen/y DEO2
-	#01 ;draw-char/color STA
-	;dict/assembled-in draw-str
-	;write/length LDA2 #00ff SUB2 draw-dec
-	;dict/bytes draw-str
-	( draw time )
-	;dict/completed-in draw-str
-	.emu/time LDZ2 draw-dec
-	;dict/cycles
+!draw-asm
 
-!draw-str
 
 @draw-clear ( -- )
 
@@ -204,17 +193,41 @@ JMP2r
 	#0010 .Screen/x DEO2
 	.Screen/height DEI2 #0048 SUB2 .Screen/y DEO2
 	;dict/console #03 draw-str-color
-	;console-buf #01 draw-str-color
+	;console-buf #01
 
-JMP2r
+!draw-str-color
 
 @draw-error ( -- )
 
 	#0010 .Screen/x DEO2
 	.Screen/height DEI2 #0038 SUB2 .Screen/y DEO2
-	;dict/error #03 draw-str-color
+	;dict/error #03
 
-JMP2r
+!draw-str-color
+
+@draw-asm ( -- )
+
+	#0010 .Screen/x DEO2
+	#0010 .Screen/y DEO2
+	#01 ;draw-char/color STA
+	;write/length LDA2 #0000 EQU2 ?&ready
+
+	;dict/assembled-in draw-str
+	;write/length LDA2 #00ff SUB2 draw-dec
+	;dict/bytes draw-str
+
+	( draw time )
+	;dict/completed-in draw-str
+	.emu/time LDZ2 draw-dec
+	;dict/cycles
+
+!draw-str
+
+&ready
+
+	;dict/ready #01
+
+!draw-str-color
 
 @draw-short ( short* -- )
 

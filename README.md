@@ -4,14 +4,23 @@
 
 ## Build
 
-This assembler is written in the language it is assembling, creating a chicken-and-egg problem. You have two choices, download a pre-assembled [drifblim.rom](https://rabbits.srht.site/drifblim/drifblim.rom)(1300 bytes), or use [uxnasm.c](https://git.sr.ht/~rabbits/uxn/tree/main/item/src/uxnasm.c).
+You must have an [Uxn](https://git.sr.ht/~rabbits/uxn/) assembler and emulator.
 
 ```sh
 uxnasm src/bicycle.tal bin/bicycle.rom
-uxn11 bin/bicycle.rom
 ```
 
 If do not wish to assemble it yourself, you can download [bicycle.rom](https://rabbits.srht.site/bicycle/bicycle.rom).
+
+## Run
+
+This is meant to be a companion application to [Left](http://wiki.xxiivv.com/site/left.html). Begin by launching left and bicycle:
+
+```sh
+uxnemu left.rom | uxnemu bin/bicycle.rom
+```
+
+To send code to be assembled and evaluated by Bicycle from Left, select some text in Left and send it to Bicycle with `ctrl+p`.
 
 ## Support
 
