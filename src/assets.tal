@@ -2,7 +2,7 @@
 @|tables )
 
 @errors
-	=dict/underflow =dict/overflow =dict/divzero
+	=dict/error-ok =dict/underflow =dict/overflow =dict/divzero
 
 @sources
 	=dict/ws =dict/rs
@@ -12,7 +12,6 @@
 	&rs "RS 20 $1
 	&pc "PC: $1
 	&console "Console 20 $1
-	&error "Error 20 $1
 	&empty "Empty $1
 	&out "OUT 20 $1
 	&err "ERR 20 $1
@@ -21,9 +20,6 @@
 	&completed-in "completed 20 "in 20 $1
 	&cycles 20 "cycles. $1
 	&ready "Ready $1
-	&underflow "Underflow $1
-	&overflow "Overflow $1
-	&divzero "Zero-Div $1
 	&breakpoint "Breakpoint $1
 	&halt "Halted $1
 	&end "Ended $1
@@ -31,6 +27,12 @@
 	&in ", 20 "in 20 $1
 	&dot ". 0a $1
 	&reset "INIT $1
+
+	&error "Error 20 $1
+	&error-ok "Ok. $1
+	&underflow "Underflow $1
+	&overflow "Overflow $1
+	&divzero "Zero-Div $1
 
 @err "!! 20 "Error: 20 $1
 	&duplicate "Duplicate $1

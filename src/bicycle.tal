@@ -21,7 +21,7 @@
 	#f0aa .System/b DEO2
 	( size )
 	#01c0 .Screen/width DEO2
-	#0080 .Screen/height DEO2
+	#00a0 .Screen/height DEO2
 	( mode )
 	#15 .Screen/auto DEO
 	redraw
@@ -83,10 +83,17 @@ BRK
 	#f000
 	&w
 		step
+		.uxn/err LDZ ?&err
 		.emu/sleep LDZ ?&end
 		INC2 ORAk ?&w
 	&end
 	POP2
+
+JMP2r
+	&err POP2
+	( reset ptrs )
+	#00 ;wst/ptr STA
+	#00 ;rst/ptr STA
 
 JMP2r
 
@@ -125,14 +132,13 @@ JMP2r
 	#0010
 		DUP2 .Screen/x DEO2
 		.Screen/y DEO2
-	;source
+
 	draw-console
 	draw-error
 	draw-stacks
 	draw-spacer
 
 !draw-asm
-
 
 @draw-clear ( -- )
 
@@ -201,14 +207,15 @@ JMP2r
 
 	#0010 .Screen/x DEO2
 	.Screen/height DEI2 #0038 SUB2 .Screen/y DEO2
-	;dict/error #03
+	;dict/error #03 draw-str-color
+	#00 .uxn/err LDZ DUP ADD ;errors ADD2 LDA2 #01 draw-str-color
 
-!draw-str-color
+JMP2r
 
 @draw-asm ( -- )
 
 	#0010 .Screen/x DEO2
-	#0010 .Screen/y DEO2
+	#0030 .Screen/y DEO2
 	#01 ;draw-char/color STA
 	;write/length LDA2 #0000 EQU2 ?&ready
 
@@ -219,9 +226,31 @@ JMP2r
 	( draw time )
 	;dict/completed-in draw-str
 	.emu/time LDZ2 draw-dec
-	;dict/cycles
+	;dict/cycles draw-str
 
-!draw-str
+	( draw code )
+	#0010 .Screen/x DEO2
+	#0010 .Screen/y DEO2
+	;source
+	&w
+		.Screen/x DEI2 .Screen/width DEI2 #0010 SUB2 GTH2 ?&e-tal
+		LDAk draw-char
+		INC2 LDAk ?&w
+	&e-tal
+	POP2
+
+	( draw assembled )
+	#0010 .Screen/x DEO2
+	#0020 .Screen/y DEO2
+	;write/length LDA2 #00ff SUB2 #0000
+	&l
+		DUP2 ;rom/reset ADD2 LDA draw-byte #20 draw-char
+		.Screen/x DEI2 .Screen/width DEI2 #0010 SUB2 GTH2 ?&e-asm
+		INC2 GTH2k ?&l
+	&e-asm
+	POP2 POP2
+
+JMP2r
 
 &ready
 
