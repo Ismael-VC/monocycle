@@ -43,23 +43,18 @@
 	&mode "Mode $1
 	&rewind "Rewind $1
 
-@opcodes
+@opcodes [
 	"LIT $1 "INC $1 "POP $1 "NIP $1 "SWP $1 "ROT $1 "DUP $1 "OVR $1
 	"EQU $1 "NEQ $1 "GTH $1 "LTH $1 "JMP $1 "JCN $1 "JSR $1 "STH $1
 	"LDZ $1 "STZ $1 "LDR $1 "STR $1 "LDA $1 "STA $1 "DEI $1 "DEO $1
 	"ADD $1 "SUB $1 "MUL $1 "DIV $1 "AND $1 "ORA $1 "EOR $1 "SFT $1
-	&brk "BRK $1 &jmi "JMI $1 &jci "JCI $1 &jsi "JSI $1
+	&brk "BRK $1 &jmi "JMI $1 &jci "JCI $1 &jsi "JSI $1 ]
 
 (
 @|sprites )
 
 @jagged-icn [
-0000 0788 7000 0000 ]
-@pointer-icn ( from Symbolics ) [
-80c0 e0f0 f8fc feff
-f8d8 8c0c 0606 0000
-0000 0000 0000 0000
-0000 0000 0000 0000 ]
+	0000 0788 7000 0000 ]
 @cursor-icn [
 	80c0 e0f0 f8e0 1000 ]
 @font ( losangeles12 )

@@ -77,7 +77,8 @@ BRK
 	;write/head LDA2 .emu/length STZ2
 	( let's go! )
 	draw-clear
-	run redraw
+	run
+	redraw
 	( cleanup )
 	;source
 		DUP2 ;&ptr STA2
@@ -149,15 +150,14 @@ JMP2r
 
 @draw-clear ( -- )
 
-	#0000
-		DUP2 .Screen/x DEO2
-		.Screen/y DEO2
-	#f1 .Screen/auto DEO
-	#00 .Screen/width DEI2 #03 SFT2 NIP SUB
-	&l
-		#00 .Screen/sprite DEO
-		INC DUP ?&l
-	POP
+	#91 .Screen/auto DEO
+	#00 .Screen/width DEI2 #03 SFT2 NIP SUB DUP
+	#0000 .Screen/x DEO2
+	#0000 .Screen/y DEO2
+		&above #00 .Screen/sprite DEO INC DUP ?&above POP
+	#0000 .Screen/x DEO2
+	#0050 .Screen/y DEO2
+		&below #00 .Screen/sprite DEO INC DUP ?&below POP
 	#15 .Screen/auto DEO
 
 JMP2r
@@ -264,10 +264,6 @@ JMP2r
 	;dict/ready #01
 
 !draw-str-color
-
-@draw-short ( short* -- )
-
-	SWP draw-byte
 
 @draw-byte ( byte -- )
 
