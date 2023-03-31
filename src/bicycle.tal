@@ -47,7 +47,7 @@ BRK
 @on-console ( -> )
 
 	.Console/read DEI
-	DUP #00 NEQ ?&append
+	DUP ?&append
 	!&eval
 
 &append ( c -- )
@@ -132,9 +132,9 @@ JMP2r
 	( draw time )
 	;dict/completed-in draw-str
 	.emu/time LDZ2 draw-dec
-	;dict/cycles draw-str
+	;dict/cycles
 
-JMP2r
+!draw-str
 
 @draw-clear ( -- )
 
@@ -228,9 +228,7 @@ JMP2r
 
 @draw-event ( str* -- )
 
-	pstr
-
-JMP2r
+	!pstr
 
 @draw-str-color ( str* color -- )
 
@@ -280,7 +278,7 @@ JMP2r
 (
 @|stdlib )
 
-	@mclr ( src* len* -- ) OVR2 ADD2 SWP2 &l STH2k #00 STH2r STA INC2 GTH2k ,&l JCN POP2 POP2 JMP2r
+	@mclr ( src* len* -- ) OVR2 ADD2 SWP2 &l STH2k #00 STH2r STA INC2 GTH2k ?&l POP2 POP2 JMP2r
 	@scap ( str* -- end* ) LDAk ?&w JMP2r &w INC2 LDAk ?&w JMP2r
 	@sput ( chr str* -- ) scap INC2k #00 ROT ROT STA STA JMP2r
 	@slen ( str* -- len* ) DUP2 scap SWP2 SUB2 JMP2r
@@ -292,7 +290,7 @@ JMP2r
 	@chex ( c -- val|ff ) LIT "0 SUB DUP #09 GTH [ JMP JMP2r ] #27 SUB DUP #0f GTH [ JMP JMP2r ] POP #ff JMP2r
 	@shex ( str* -- val* ) LIT2r 0000 &w LITr 40 SFT2r LITr 00 LDAk chex STH ADD2r INC2 LDAk ?&w POP2 STH2r JMP2r
 	@pstr ( str* -- ) LDAk ?&w POP2 JMP2r &w LDAk #19 DEO INC2 LDAk ?&w POP2 JMP2r
-	@phex ( short* -- ) SWP ,&b JSR &b ( byte -- ) DUP #04 SFT ,&c JSR &c ( char -- ) #0f AND DUP #09 GTH #27 MUL ADD #30 ADD #18 DEO JMP2r
+	@phex ( short* -- ) SWP phex/b &b ( byte -- ) DUP #04 SFT phex/c &c ( char -- ) #0f AND DUP #09 GTH #27 MUL ADD #30 ADD #18 DEO JMP2r
 
 ~src/asm.tal
 

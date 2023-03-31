@@ -39,9 +39,7 @@ JMP2r
 
 &halt ( opcode -- )
 
-	STH
-	;dict/halt ;dict/end STHr [ JMP SWP2 POP2 ]
-		draw-event
+	POP
 	#01 .emu/sleep STZ
 
 JMP2r
