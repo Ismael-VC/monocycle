@@ -74,7 +74,6 @@ BRK
 	;rom .emu/length LDZ2 mclr
 	;console-buf sclr
 
-
 	draw-clear
 	assemble
 	;write/head LDA2 .emu/length STZ2

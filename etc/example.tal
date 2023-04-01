@@ -1,10 +1,15 @@
-( error ) POP
+|20 @Screen &vector $2 &width $2 &height $2 &auto $1 &pad $1 &x $2 &y $2 &addr $2 &pixel $1 &sprite $1
 
-#12 #34 ADDk SUB INCk MULk
+|0100 ( -> )
 
-LIT "a #18 DEO
+	;hello-word print-text
+	LIT "? #18 DEO
 
-;hello-word
+	#0180
+		DUP2 .Screen/width DEO2
+		.Screen/height DEO2
+
+BRK
 
 @print-text ( str* -- )
 
@@ -13,7 +18,7 @@ LIT "a #18 DEO
 		( loop ) INC2 LDAk ,&while JCN
 	POP2
 
-BRK
+JMP2r
 
 @hello-word "Hello 20 "World! 00
 
