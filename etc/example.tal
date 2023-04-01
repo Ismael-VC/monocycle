@@ -7,7 +7,7 @@
 
 |0100 ( -> )
 
-	#0020 #0020 #0180 #0070 #02 draw-line
+	;hello-world print-text
 
 BRK
 
@@ -20,7 +20,7 @@ BRK
 
 JMP2r
 
-@hello-word "Hello 20 "World! 00
+@hello-world "Hello 20 "World! 00
 
 @draw-line ( x1* y1* x2* y2* color -- )
 

@@ -108,7 +108,7 @@ JMP2r
 	DUP #40 EQU ?&op-jmi
 	DUP #60 EQU ?&op-jsi
 	.uxn/pc LDZ2 DUP2 peek push #0001 .uxn/2 LDZ ADD ADD2 !warp/16
-&op-jci ;wst .uxn/src STZ2 pop/8 ?&op-jmi ( else ) .uxn/pc LDZ2k INC2 INC2 ROT STZ2 JMP2r
+&op-jci ;wst .uxn/src STZ2 pop/8 NIP ?&op-jmi ( else ) .uxn/pc LDZ2k INC2 INC2 ROT STZ2 JMP2r
 &op-jsi ;rst .uxn/src STZ2 .uxn/pc LDZ2 INC2 INC2 push/16 ( fall )
 &op-jmi .uxn/pc LDZ2 DUP2 peek/16 ADD2 INC2 INC2 !warp/16
 ( ALU )
