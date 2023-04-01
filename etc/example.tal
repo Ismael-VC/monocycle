@@ -1,9 +1,16 @@
 |20 @Screen &vector $2 &width $2 &height $2 &auto $1 &pad $1 &x $2 &y $2 &addr $2 &pixel $1 &sprite $1
 
+|0000
+
+	@line
+	&x2 $2 &y2 $2
+
 |0100 ( -> )
 
 	;hello-word print-text
 	LIT "? #18 DEO
+
+	#0020 #0020 #0180 #0070 #02 draw-line
 
 	#0180
 		DUP2 .Screen/width DEO2
@@ -21,4 +28,44 @@ BRK
 JMP2r
 
 @hello-word "Hello 20 "World! 00
+
+@draw-line ( x1* y1* x2* y2* color -- )
+
+	( load )
+	,&color STR
+	,&y STR2
+	,&x STR2
+	.line/y2 STZ2
+	.line/x2 STZ2
+
+	,&x LDR2 .line/x2 LDZ2 SUB2 abs2 ,&dx STR2
+	#0000 ,&y LDR2 .line/y2 LDZ2 SUB2 abs2 SUB2 ,&dy STR2
+
+	#ffff #00 .line/x2 LDZ2 ,&x LDR2 lts2 DUP2 ADD2 ADD2 ,&sx STR2
+	#ffff #00 .line/y2 LDZ2 ,&y LDR2 lts2 DUP2 ADD2 ADD2 ,&sy STR2
+
+	[ LIT2 &dx $2 ] [ LIT2 &dy $2 ] ADD2 ,&e1 STR2
+
+	&loop
+		.line/x2 LDZ2 DUP2 .Screen/x DEO2 [ LIT2 &x $2 ] EQU2
+		.line/y2 LDZ2 DUP2 .Screen/y DEO2 [ LIT2 &y $2 ] EQU2
+			[ LIT2 &color $1 -Screen/pixel ] DEO
+			AND ?&end
+		[ LIT2 &e1 $2 ] DUP2 ADD2 DUP2
+		,&dy LDR2 lts2 ?&skipy
+			,&e1 LDR2 ,&dy LDR2 ADD2 ,&e1 STR2
+			.line/x2 LDZ2 [ LIT2 &sx $2 ] ADD2 .line/x2 STZ2
+		&skipy
+		,&dx LDR2 gts2 ?&skipx
+			,&e1 LDR2 ,&dx LDR2 ADD2 ,&e1 STR2
+			.line/y2 LDZ2 [ LIT2 &sy $2 ] ADD2 .line/y2 STZ2
+		&skipx
+		!&loop
+	&end
+
+JMP2r
+
+@abs2 DUP2 #0f SFT2 EQU #05 JCN #0000 SWP2 SUB2 JMP2r
+@lts2 #8000 STH2k ADD2 SWP2 STH2r ADD2 GTH2 JMP2r
+@gts2 #8000 STH2k ADD2 SWP2 STH2r ADD2 LTH2 JMP2r
 
