@@ -7,14 +7,7 @@
 
 |0100 ( -> )
 
-	;hello-word print-text
-	LIT "? #18 DEO
-
 	#0020 #0020 #0180 #0070 #02 draw-line
-
-	#0180
-		DUP2 .Screen/width DEO2
-		.Screen/height DEO2
 
 BRK
 

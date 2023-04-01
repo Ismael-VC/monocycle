@@ -74,7 +74,7 @@ JMP2r
 &16 ( -- v* ) pop/byte pop/byte SWP JMP2r
 
 @poke ( v* a* -- ) .uxn/2 LDZ ?&16
-&8 ;rom ADD2 STA JMP2r
+&8 ;rom ADD2 STA POP JMP2r
 &16 ;rom ADD2 STA2 JMP2r
 
 @peek ( a* -- v* ) .uxn/2 LDZ ?&16
