@@ -54,7 +54,7 @@
 @|sprites )
 
 @jagged-icn [
-	0000 0788 7000 0000 ]
+	0000 0070 8807 0000 ffff ff8f 0700 0000 ]
 @cursor-icn [
 	80c0 e0f0 f8e0 1000 ]
 @font ( losangeles12 )

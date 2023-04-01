@@ -16,14 +16,15 @@
 |0100
 
 	( theme )
-	#f05a .System/r DEO2
-	#f0ba .System/g DEO2
-	#f0aa .System/b DEO2
+	#f08a .System/r DEO2
+	#f0da .System/g DEO2
+	#f0ba .System/b DEO2
 	( size )
 	#01c0 .Screen/width DEO2
 	#00a0 .Screen/height DEO2
 	( mode )
 	#15 .Screen/auto DEO
+	draw-clear
 	redraw
 
 	( unlock )
@@ -151,12 +152,11 @@ JMP2r
 @draw-clear ( -- )
 
 	#91 .Screen/auto DEO
+	;font/glyphs .Screen/addr DEO2
 	#00 .Screen/width DEI2 #03 SFT2 NIP SUB DUP
-	#0000 .Screen/x DEO2
-	#0000 .Screen/y DEO2
-		&above #00 .Screen/sprite DEO INC DUP ?&above POP
-	#0000 .Screen/x DEO2
-	#0050 .Screen/y DEO2
+	#0000 .Screen/x DEO2 #0000 .Screen/y DEO2
+		&above #09 .Screen/sprite DEO INC DUP ?&above POP
+	#0000 .Screen/x DEO2 #0050 .Screen/y DEO2
 		&below #00 .Screen/sprite DEO INC DUP ?&below POP
 	#15 .Screen/auto DEO
 
@@ -223,7 +223,7 @@ JMP2r
 
 	#0010 .Screen/x DEO2
 	#0030 .Screen/y DEO2
-	#01 ;draw-char/color STA
+	#05 ;draw-char/color STA
 	;write/length LDA2 #0000 EQU2 ?&ready
 
 	;dict/assembled-in draw-str
@@ -261,7 +261,7 @@ JMP2r
 
 &ready
 
-	;dict/ready #01
+	;dict/ready #05
 
 !draw-str-color
 
@@ -344,7 +344,7 @@ JMP2r
 	#01 .Screen/auto DEO
 	#00 .Screen/width DEI2 #03 SFT2 NIP SUB
 	&l
-		#01 .Screen/sprite DEO
+		#81 .Screen/sprite DEO
 		INC DUP ?&l
 	POP
 	#15 .Screen/auto DEO
