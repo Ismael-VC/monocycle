@@ -23,7 +23,7 @@
 	#01c0 .Screen/width DEO2
 	#00a0 .Screen/height DEO2
 	( mode )
-	#15 .Screen/auto DEO
+	[ LIT2 15 -Screen/auto ] DEO
 	draw-clear
 	redraw
 
@@ -151,14 +151,14 @@ JMP2r
 
 @draw-clear ( -- )
 
-	#91 .Screen/auto DEO
+	[ LIT2 91 -Screen/auto ] DEO
 	;font/glyphs .Screen/addr DEO2
 	#00 .Screen/width DEI2 #03 SFT2 NIP SUB DUP
 	#0000 .Screen/x DEO2 #0000 .Screen/y DEO2
 		&above #09 .Screen/sprite DEO INC DUP ?&above POP
 	#0000 .Screen/x DEO2 #0050 .Screen/y DEO2
 		&below #00 .Screen/sprite DEO INC DUP ?&below POP
-	#15 .Screen/auto DEO
+	[ LIT2 15 -Screen/auto ] DEO
 
 JMP2r
 
@@ -251,7 +251,7 @@ JMP2r
 	#0020 .Screen/y DEO2
 	;write/length LDA2 #00ff SUB2 #0000
 	&l
-		DUP2 ;rom/reset ADD2 LDA draw-byte #20 draw-char
+		DUP2 ;rom/reset ADD2 LDA draw-byte #20 draw-char #20 draw-char
 		.Screen/x DEI2 .Screen/width DEI2 #0010 SUB2 GTH2 ?&e-asm
 		INC2 GTH2k ?&l
 	&e-asm
@@ -312,7 +312,7 @@ JMP2r
 
 @draw-str ( str* -- )
 
-	#15 .Screen/auto DEO
+	[ LIT2 15 -Screen/auto ] DEO
 	&while
 		LDAk draw-char
 		INC2 LDAk ?&while
@@ -341,16 +341,15 @@ JMP2r
 	#0000 .Screen/x DEO2
 	.Screen/height DEI2 #0058 SUB2 .Screen/y DEO2
 	;jagged-icn .Screen/addr DEO2
-	#01 .Screen/auto DEO
+	[ LIT2 01 -Screen/auto ] DEO
 	#00 .Screen/width DEI2 #03 SFT2 NIP SUB
 	&l
 		#81 .Screen/sprite DEO
 		INC DUP ?&l
 	POP
-	#15 .Screen/auto DEO
+	[ LIT2 15 -Screen/auto ] DEO
 
 JMP2r
-
 
 (
 @|stdlib )
