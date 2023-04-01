@@ -20,7 +20,7 @@ This is meant to be a companion application to [Left](http://wiki.xxiivv.com/sit
 uxnemu left.rom | uxnemu bin/bicycle.rom
 ```
 
-To send code to be assembled and evaluated by Bicycle from Left, select some text in Left and send it to Bicycle with `ctrl+p`.
+To send code to be assembled and evaluated by Bicycle from Left, select some text in Left and send it to Bicycle with `ctrl+p`. Alternatively, uxntal can be written directly into the console, and will be evaluated on `enter`.
 
 ## Support
 

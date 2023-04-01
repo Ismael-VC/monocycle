@@ -50,7 +50,7 @@ BRK
 @on-console ( -> )
 
 	.Console/read DEI
-	DUP ?&append
+	DUP #0a NEQ ?&append
 	!&eval
 
 &append ( c -- )
