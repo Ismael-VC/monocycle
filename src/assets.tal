@@ -16,6 +16,7 @@
 	&out "OUT 20 $1
 	&err "ERR 20 $1
 	&assembled-in "Assembled 20 "in 20 $1
+	&assembly "Assembly 20 $1
 	&bytes 20 "bytes, 20 $1
 	&completed-in "completed 20 "in 20 $1
 	&cycles 20 "cycles. $1

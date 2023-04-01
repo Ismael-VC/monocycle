@@ -1,11 +1,7 @@
-@set-error ( err* -- )
-
-	;handle-error/err STA2
-
-JMP2r
-
 (
 @|generics )
+
+@asm-err $2
 
 @assemble ( -- )
 
@@ -13,6 +9,7 @@ JMP2r
 	;sym
 		DUP2 #2000 mclr
 		;create-label/ptr STA2
+	#0000 ;asm-err STA2
 	#0000 ;write/length STA2
 	( let's go! )
 	#01 handle-all
@@ -28,6 +25,7 @@ JMP2r
 	&w
 		LDAk handle-char
 		INC2 LDAk ?&w
+	&end
 	POP2
 
 JMP2r
@@ -39,7 +37,7 @@ JMP2r
 
 JMP2r
 	&append ( c -- ) ;token DUP2 slen #001f LTH2 ?sput POP JMP2r
-	&run ( t* -- ) DUP2 handle-token sclr !handle-error
+	&run ( t* -- ) DUP2 handle-token !sclr
 
 @handle-token ( t* -- )
 
@@ -50,12 +48,6 @@ JMP2r
 !parse
 	&on-parens ( t* -- ) LDA LIT "( EQU ,&sleep STR JMP2r
 	&on-sleep ( t* -- ) POP2 JMP2r
-
-@handle-error ( -- )
-
-	[ LIT2 &err $2 ] pstr
-
-JMP2r
 
 (
 @|core )
@@ -176,6 +168,12 @@ JMP2r
 @set-head ( v* -- )
 
 	;write/head STA2
+
+JMP2r
+
+@set-error ( err* -- )
+
+	;asm-err STA2
 
 JMP2r
 

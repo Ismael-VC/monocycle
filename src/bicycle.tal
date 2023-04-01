@@ -246,6 +246,8 @@ JMP2r
 	#0010 .Screen/x DEO2
 	#0030 .Screen/y DEO2
 	#05 ;draw-char/color STA
+
+	;asm-err LDA2 ORAk ?&error POP2
 	;write/length LDA2 #0000 EQU2 ?&ready
 
 	;dict/assembled-in draw-str
@@ -268,6 +270,7 @@ JMP2r
 	&e-asm
 	POP2 POP2
 
+	&skip
 JMP2r
 
 &ready
@@ -275,6 +278,14 @@ JMP2r
 	;dict/ready #05
 
 !draw-str-color
+
+&error ( err* -- )
+
+	;dict/assembly draw-str
+	;dict/error draw-str
+	[ LIT2 20 ": ] draw-char draw-char
+
+!draw-str
 
 @draw-byte ( byte -- )
 
