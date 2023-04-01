@@ -1,0 +1,11 @@
+( 49 dec ) #31 sqrt pdec BRK
+
+
+@sqrt ( a* -- a* )
+
+
+
+JMP2r
+
+
+

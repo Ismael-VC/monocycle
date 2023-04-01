@@ -73,11 +73,16 @@ BRK
 	( pre cleanup )
 	;rom .emu/length LDZ2 mclr
 	;console-buf sclr
-	( parse )
-	assemble
+
+
+	draw-clear
+	( a ) draw-src
+	( b ) assemble
+	( c ) draw-asm
+
 	;write/head LDA2 .emu/length STZ2
 	( let's go! )
-	draw-clear
+
 	run
 	redraw
 	( cleanup )
@@ -142,12 +147,14 @@ JMP2r
 		DUP2 .Screen/x DEO2
 		.Screen/y DEO2
 
+	draw-src
+	draw-asm
+
 	draw-console
 	draw-error
-	draw-stacks
 	draw-spacer
+!draw-stacks
 
-!draw-asm
 
 @draw-clear ( -- )
 
@@ -219,6 +226,21 @@ JMP2r
 
 !draw-str-color
 
+@draw-src ( -- )
+
+	#0010 .Screen/x DEO2
+	#0010 .Screen/y DEO2
+	#08 ;draw-char/color STA
+	;source
+	&w
+		.Screen/x DEI2 .Screen/width DEI2 #0010 SUB2 GTH2 ?&e-tal
+		LDAk draw-char
+		INC2 LDAk ?&w
+	&e-tal
+	POP2
+
+JMP2r
+
 @draw-asm ( -- )
 
 	#0010 .Screen/x DEO2
@@ -234,17 +256,6 @@ JMP2r
 	;dict/completed-in draw-str
 	.emu/time LDZ2 draw-dec
 	;dict/cycles draw-str
-
-	( draw code )
-	#0010 .Screen/x DEO2
-	#0010 .Screen/y DEO2
-	;source
-	&w
-		.Screen/x DEI2 .Screen/width DEI2 #0010 SUB2 GTH2 ?&e-tal
-		LDAk draw-char
-		INC2 LDAk ?&w
-	&e-tal
-	POP2
 
 	( draw assembled )
 	#0010 .Screen/x DEO2
