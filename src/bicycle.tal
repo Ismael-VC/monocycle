@@ -16,15 +16,15 @@
 |0100
 
 	( theme )
-	#f08a .System/r DEO2
-	#f0da .System/g DEO2
-	#f0ba .System/b DEO2
+	#8a0f .System/r DEO2
+	#da0f .System/g DEO2
+	#ba0f .System/b DEO2
 	( size )
 	#01c0 .Screen/width DEO2
 	#00a0 .Screen/height DEO2
 	( mode )
 	[ LIT2 15 -Screen/auto ] DEO
-	draw-clear
+
 	redraw
 
 	( unlock )
@@ -74,7 +74,6 @@ BRK
 	;rom .emu/length LDZ2 mclr
 	;console-buf sclr
 
-	draw-clear
 	assemble
 	;write/head LDA2 .emu/length STZ2
 	run
@@ -137,43 +136,81 @@ JMP2r
 
 @redraw ( -- )
 
+	draw-bg
 	#0010
 		DUP2 .Screen/x DEO2
 		.Screen/y DEO2
-
+	[ LIT2 15 -Screen/auto ] DEO
 	draw-src
 	draw-asm
-
+	( bottom )
 	draw-console
 	draw-error
-	draw-spacer
 !draw-stacks
 
+@draw-bg ( -- )
 
-@draw-clear ( -- )
+	( fill )
+	#0000 .Screen/y DEO2
+	[ LIT2 11 -Screen/auto ] DEO
+	[ LIT2 00 -Screen/height ] DEI2 #03 SFT2 NIP SUB #0c ADD
+	&h
+		[ LIT2 00 -Screen/width ] DEI2 #03 SFT2 NIP SUB
+		&w
+			[ LIT2 00 -Screen/sprite ] DEO
+			INC DUP ?&w
+		POP
+		#0000 .Screen/x DEO2
+		.Screen/y DEI2k #0010 ADD2 ROT DEO2
+		INC DUP ?&h
+	POP
 
-	[ LIT2 91 -Screen/auto ] DEO
+	( spacer )
+	#0000 .Screen/x DEO2
+	.Screen/height DEI2 #0058 SUB2 .Screen/y DEO2
+	;jagged-icn .Screen/addr DEO2
+	[ LIT2 01 -Screen/auto ] DEO
+	[ LIT2 00 -Screen/width ] DEI2 #03 SFT2 NIP SUB
+	&spacer [ LIT2 81 -Screen/sprite ] DEO INC DUP ?&spacer POP
+	( bottom )
+	#0000 .Screen/x DEO2
+	.Screen/height DEI2 #0050 SUB2 .Screen/y DEO2
 	;font/glyphs .Screen/addr DEO2
-	#00 .Screen/width DEI2 #03 SFT2 NIP SUB DUP
-	#0000 .Screen/x DEO2 #0000 .Screen/y DEO2
-		&above #09 .Screen/sprite DEO INC DUP ?&above POP
-	#0000 .Screen/x DEO2 #0050 .Screen/y DEO2
-		&below #00 .Screen/sprite DEO INC DUP ?&below POP
-	[ LIT2 15 -Screen/auto ] DEO
+	[ LIT2 91 -Screen/auto ] DEO
+	[ LIT2 00 -Screen/width ] DEI2 #03 SFT2 NIP SUB
+	&below [ LIT2 0c -Screen/sprite ] DEO INC DUP ?&below POP
 
 JMP2r
+
+@draw-console ( -- )
+
+	#0010 .Screen/x DEO2
+	.Screen/height DEI2 #0048 SUB2 .Screen/y DEO2
+	;dict/console #05 draw-str-color
+	;console-buf #0a
+
+!draw-str-color
+
+@draw-error ( -- )
+
+	#0010 .Screen/x DEO2
+	.Screen/height DEI2 #0038 SUB2 .Screen/y DEO2
+	;dict/error #05 draw-str-color
+	#00 .uxn/err LDZ DUP ADD ;errors ADD2 LDA2 #0a
+
+!draw-str-color
 
 @draw-stacks ( -- )
 
 	( ws )
 	#0010 .Screen/x DEO2
 	.Screen/height DEI2 #0028 SUB2 .Screen/y DEO2
-	;dict/ws #03 draw-str-color
+	;dict/ws #05 draw-str-color
 	;wst draw-stack
 	( rs )
 	#0010 .Screen/x DEO2
 	.Screen/height DEI2 #0018 SUB2 .Screen/y DEO2
-	;dict/rs #03 draw-str-color
+	;dict/rs #05 draw-str-color
 	;rst
 
 @draw-stack ( stack* -- )
@@ -181,17 +218,14 @@ JMP2r
 	DUP2 #00fe ADD2 LDA
 		DUP ,&sp STR
 	?&no-new
-		POP2 ;dict/empty #01 !draw-str-color
+		POP2 ;dict/empty #05 !draw-str-color
 		&no-new
+	#0a ;draw-char/color STA
 
 	STH2
 	#2000
 	&loop
-		( highlight )
-		INCk [ LIT &sp $1 ] EQU STH
-			#0201 STHr [ JMP SWP POP ] ;draw-char/color STA
-		( end )
-		DUP ,&sp LDR LTH ?&no-empty
+		DUP [ LIT &sp $1 ] LTH ?&no-empty
 			POP2 POP2r JMP2r
 			&no-empty
 		( byte )
@@ -202,29 +236,11 @@ JMP2r
 
 JMP2r
 
-@draw-console ( -- )
-
-	#0010 .Screen/x DEO2
-	.Screen/height DEI2 #0048 SUB2 .Screen/y DEO2
-	;dict/console #03 draw-str-color
-	;console-buf #01
-
-!draw-str-color
-
-@draw-error ( -- )
-
-	#0010 .Screen/x DEO2
-	.Screen/height DEI2 #0038 SUB2 .Screen/y DEO2
-	;dict/error #03 draw-str-color
-	#00 .uxn/err LDZ DUP ADD ;errors ADD2 LDA2 #01
-
-!draw-str-color
-
 @draw-src ( -- )
 
 	#0010 .Screen/x DEO2
 	#0010 .Screen/y DEO2
-	#08 ;draw-char/color STA
+	#0a ;draw-char/color STA
 	;source
 	&w
 		.Screen/x DEI2 .Screen/width DEI2 #0010 SUB2 GTH2 ?&e-tal
@@ -239,7 +255,7 @@ JMP2r
 
 	#0010 .Screen/x DEO2
 	#0030 .Screen/y DEO2
-	#05 ;draw-char/color STA
+	#0a ;draw-char/color STA
 
 	;asm-err LDA2 ORAk ?&error POP2
 	;write/length LDA2 #0000 EQU2 ?&ready
@@ -269,7 +285,7 @@ JMP2r
 
 &ready
 
-	;dict/ready #05
+	;dict/ready #0f
 
 !draw-str-color
 
@@ -349,21 +365,6 @@ JMP2r
 	[ LIT2 &x $2 ] .Screen/x DEO2
 	[ LIT2 &y $2 ] .Screen/y DEO2
 	.Screen/sprite DEO
-
-JMP2r
-
-@draw-spacer ( -- )
-
-	#0000 .Screen/x DEO2
-	.Screen/height DEI2 #0058 SUB2 .Screen/y DEO2
-	;jagged-icn .Screen/addr DEO2
-	[ LIT2 01 -Screen/auto ] DEO
-	#00 .Screen/width DEI2 #03 SFT2 NIP SUB
-	&l
-		#81 .Screen/sprite DEO
-		INC DUP ?&l
-	POP
-	[ LIT2 15 -Screen/auto ] DEO
 
 JMP2r
 
