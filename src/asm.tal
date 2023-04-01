@@ -1,9 +1,8 @@
-@on-error ( id* name* -> )
+@set-error ( err* -- )
 
-	;err pstr pstr #2019 DEO pstr ;dict/in pstr ;scope pstr ;dict/dot pstr
-	( halt ) #010f DEO
+	;handle-error/err STA2
 
-BRK
+JMP2r
 
 (
 @|generics )
@@ -40,7 +39,7 @@ JMP2r
 
 JMP2r
 	&append ( c -- ) ;token DUP2 slen #001f LTH2 ?sput POP JMP2r
-	&run ( t* -- ) DUP2 handle-token !sclr
+	&run ( t* -- ) DUP2 handle-token sclr !handle-error
 
 @handle-token ( t* -- )
 
@@ -51,6 +50,12 @@ JMP2r
 !parse
 	&on-parens ( t* -- ) LDA LIT "( EQU ,&sleep STR JMP2r
 	&on-sleep ( t* -- ) POP2 JMP2r
+
+@handle-error ( -- )
+
+	[ LIT2 &err $2 ] pstr
+
+JMP2r
 
 (
 @|core )
@@ -102,7 +107,7 @@ JMP2r
 		SUB2k write-fill POP2 JMP2r
 		&no-pad
 	OVR2 #0100 LTH2 ?&no-err
-		;token ;err/rewind !on-error
+		;err/rewind set-error
 		&no-err
 	POP2
 
@@ -139,8 +144,7 @@ JMP2r
 	DUP2 slen OVR2 get-hex SWP2 NIP
 	DUP #02 EQU ?&byte
 	DUP #04 EQU ?&short
-	POP POP2
-	;err/number !on-error
+	;err/number set-error
 	&byte POP NIP2 NIP !write
 	&short POP NIP2 ( fall through )
 
@@ -190,8 +194,8 @@ JMP2r
 	( move ) slen STH2r ADD2 INC2 ,&ptr STR2
 
 JMP2r
-	&invalid ;err/invalid !on-error
-	&not-unique ;err/duplicate !on-error
+	&invalid POP2 ;err/invalid !set-error
+	&not-unique POP2 ;err/duplicate !set-error
 	&skip POP2 JMP2r
 
 @make-sublabel ( name* -- sublabel* )
@@ -223,7 +227,7 @@ JMP2r
 @get-hex ( str* -- value* )
 
 	DUP2 is-hex ?&valid
-		;err/number !on-error
+		;err/number set-error
 		&valid
 
 !shex
@@ -236,7 +240,7 @@ JMP2r
 	NIP2 NIP
 
 JMP2r
-	&fail POP2 #0003 ADD2 ;err/distance !on-error
+	&fail ;err/distance set-error
 	&fill POP2 #ff JMP2r
 
 @get-ref ( token* -- <label*> )
@@ -249,7 +253,7 @@ JMP2r
 		&no-sub
 	find-label
 		INC2k ORA ?&found
-			POP2 ;err/reference !on-error
+			;err/reference set-error
 			&found
 
 JMP2r
@@ -293,8 +297,6 @@ JMP2r
 		OVR LIT "2 EQU ?&end DUP ADD
 		OVR LIT "r EQU ?&end DUP ADD
 		OVR LIT "k EQU ?&end DUP ADD
-		OVR #21 LTH ?&end
-			;token ;err/mode !on-error
 		&end NIP STH ORAr
 		INC2 LDAk ?&w
 	POP2 STHr
