@@ -76,13 +76,8 @@ BRK
 
 
 	draw-clear
-	( a ) draw-src
-	( b ) assemble
-	( c ) draw-asm
-
+	assemble
 	;write/head LDA2 .emu/length STZ2
-	( let's go! )
-
 	run
 	redraw
 	( cleanup )
