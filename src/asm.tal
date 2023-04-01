@@ -268,14 +268,14 @@ JMP2r
 
 @is-opcode ( string* -- f )
 
-	DUP2 ;opcodes2/brk scmp3 ?find-opcode/on-brk
+	DUP2 ;opcodes/brk scmp3 ?find-opcode/on-brk
 
 @find-opcode ( name* -- byte )
 
 	STH2
 	#2000
 	&l
-		#00 OVR #03 MUL ;opcodes2 ADD2 STH2kr scmp3 ?&on-found
+		#00 OVR #03 MUL ;opcodes ADD2 STH2kr scmp3 ?&on-found
 		INC GTHk ?&l
 	POP2 POP2r #00
 
@@ -304,7 +304,7 @@ JMP2r
 (
 @|assets )
 
-@opcodes2 [
+@opcodes [
 	"LIT "INC "POP "NIP "SWP "ROT "DUP "OVR
 	"EQU "NEQ "GTH "LTH "JMP "JCN "JSR "STH
 	"LDZ "STZ "LDR "STR "LDA "STA "DEI "DEO
