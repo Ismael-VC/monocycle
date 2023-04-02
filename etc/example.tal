@@ -1,3 +1,4 @@
+|00 @System &vector $2 &pad $6 &r $2 &g $2 &b $2
 |20 @Screen &vector $2 &width $2 &height $2 &auto $1 &pad $1 &x $2 &y $2 &addr $2 &pixel $1 &sprite $1
 
 |0000
@@ -7,7 +8,21 @@
 
 |0100 ( -> )
 
+	#0180
+		DUP2 .Screen/width DEO2
+		.Screen/height DEO2
+
+	( theme )
+	#8d0f .System/r DEO2
+	#8a0f .System/g DEO2
+	#ff0f .System/b DEO2
+
 	;hello-world print-text
+
+
+	#0063 #0090 #0042 #0120 #42 draw-line
+	#0023 #0030 #0042 #0090 #43 draw-line
+	#0073 #0030 #0042 #0020 #41 draw-line
 
 BRK
 

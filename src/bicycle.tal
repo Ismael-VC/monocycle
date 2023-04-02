@@ -89,7 +89,7 @@ BRK
 
 	reset
 	#00 .emu/sleep STZ
-	#f000
+	#0000
 	&w
 		step
 		.uxn/err LDZ ?&err
