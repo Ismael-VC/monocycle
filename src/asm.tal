@@ -64,8 +64,8 @@ JMP2r
 		#0003 ADD2 GTH2k ?&l
 	POP2 POP2
 	( non-runic )
-	DUP2 is-hex ?lib/rawhex
-	DUP2 is-opcode ?lib/opcode
+	is-hex ?lib/rawhex
+	is-opcode ?lib/opcode
 
 !lib/litjsi
 
@@ -183,8 +183,8 @@ JMP2r
 @create-label ( name* -- )
 
 	;write/skip LDA #00 EQU ?&skip
-	( not hex ) DUP2 is-hex ?&invalid
-	( not opc ) DUP2 is-opcode ?&invalid
+	( not hex ) is-hex ?&invalid
+	( not opc ) is-opcode ?&invalid
 	( not dup ) DUP2 find-label INC2 ORA ?&not-unique
 	( save addr ) ;write/head LDA2 [ LIT2 &ptr =sym ] STH2k STA2
 	( move ) INC2r INC2r
@@ -224,11 +224,10 @@ JMP2r
 
 @get-hex ( str* -- value* )
 
-	DUP2 is-hex ?&valid
-		;err/number set-error
-		&valid
+	is-hex ?shex
+	get-ref/no-write LDA2
 
-!shex
+JMP2r
 
 @get-rel ( label* -- distance )
 
@@ -257,8 +256,9 @@ JMP2r
 JMP2r
 	&fill ffff "[empty] $1
 
-@is-hex ( str* -- f )
+@is-hex ( str* -- str* f )
 
+	DUP2
 	&w
 		LDAk chex INC ?&valid
 			POP2 #00 JMP2r &valid
@@ -268,9 +268,9 @@ JMP2r
 
 JMP2r
 
-@is-opcode ( string* -- f )
+@is-opcode ( str* -- str* f )
 
-	DUP2 ;opcodes/brk scmp3 ?find-opcode/on-brk
+	DUP2 DUP2 ;opcodes/brk scmp3 ?find-opcode/on-brk
 
 @find-opcode ( name* -- byte )
 
